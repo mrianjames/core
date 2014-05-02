@@ -1,0 +1,5 @@
+---+ Future Development
+
+   * Broadcast of messages in container to multiple receiving components
+   * Pooling review - are there certain use cases where object pooling gives latency improvement (less jitter)? Whats the penalty. Can dispatcher make use of this as a general concept?
+   * Documentation; improve.

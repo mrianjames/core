@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase=
+"http://ianjames.dyndns-free.com:8084/webdav/oaktree_agent/1.0.1-SNAPSHOT/" 
+    href="agent.jnlp">
+    <information>
+        <title>Agent install</title>
+        <vendor>Oaktree Designs Ltd</vendor>
+    </information>
+    <resources>
+        <!-- Application Resources 
+        <j2se version="1.6+"
+              href="http://java.sun.com/products/autodl/j2se"/>-->
+        <jar href="http://ianjames.dyndns-free.com:8082/nexus-2.4.0-09/content/repositories/snapshots/oaktree/com.oaktree.agent/1.0.1-SNAPSHOT/com.oaktree.agent-1.0.1-20140209.184527-10-standard.jar" main="true" />
+
+    </resources>
+    <application-desc
+         name="Agent install"
+         main-class=
+           "com.izforge.izpack.installer.Installer"
+         width="300"
+         height="300">
+     </application-desc>
+     <update check="background"/>
+</jnlp>         

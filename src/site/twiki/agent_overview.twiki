@@ -1,0 +1,31 @@
+---+++ Core Framework
+
+Core comprises of the foundation code designed to be used as the building blocks of a low latency Java system. Contained within are two flavours of code: 
+
+   * Component Framework
+   * Utilities
+
+---++++ Component Framework
+
+The component framework provides interfaces and abstract implementations of "components". Components can be anything in your system that has a lifecycle and can be described. Components provide basic lifecycle management and can be registered in a [[./apidocs/com/oaktree/core/container/IComponentManager][IComponentManager]] for lookup from a container application. A container provides an additional layer to manage the routing of messages between components to remove dependencies between them. The component framework consists of the following key interfaces and implementations:
+
+| *Interface* | *Implementation* | *Description* |
+| [[./apidocs/com/oaktree/core/container/IComponent][IComponent]] |  [[./apidocs/com/oaktree/core/container/AbstractComponent][AbstractComponent]]  |  The key building block that has a lifecycle, name, type and	subtype . Anything can be a component (service, strategy etc). They are light weight enough to be constructed on the fly or at start time. |
+|[[./apidocs/com/oaktree/core/container/IComponentListener][IComponentListener]]|N/A|A listener to lifecycle state changes|
+|[[./apidocs/com/oaktree/core/container/IComponentManager][IComponentManager]]|[[./apidocs/com/oaktree/core/container/ComponentManager][ComponentManager]]|A registry of components that can filter requests for components based on type, subtype and state IContainer	 Container	 A wrapper around the component manager that is capable of routing IMessage objects between components|
+|[[./apidocs/com/oaktree/core/container/IMessage][IMessage]]|[[./apidocs/com/oaktree/core/container/Message][Message]]|A message that can be routed between components|
+|[[./apidocs/com/oaktree/core/threading/dispatcher/IDispatcher][IDispatcher]]|[[./apidocs/com/oaktree/core/threading/dispatcher/throughput/ThroughputDispatcher][ThroughputDispatcher]]|A component (service) that can be used to manage the threading in a system. Callers can provide a string key to specify a thread safe queue that will ensure the message or runnable task will be processed sequentially.|
+
+---++++ Utilities
+
+| *Interface* | *Implementation* | *Description* |
+|[[./apidocs/com/oaktree/core/latency/ILatencyRecorder][ILatencyRecorder]]|[[./apidocs/com/oaktree/core/latency/ILatencyRecorder][LatencyRecorder]]|  A component that can be injected to track timings of message flows though a system based on consistent ids. It produces a file of values that [[./apidocs/com/oaktree/core/latency/LatencyReader][LatencyReader]] can use to build a picture of where internal time is being utilised from an application, not a method level. Built to be used in production, it shuts off when its circular flush bufferbecomes full |
+|Queue|[[./apidocs/com/oaktree/core/utils/CircularQueue][CircularQueue]]|A circular queue whose iterator loops back to the start. Good for unit tests|
+|N/A|[[./apidocs/com/oaktree/core/utils/ResultTimer][ResultTimer]]|A class that is useful in unit tests for recording timing samples and displaying statistics in various [[http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/TimeUnit.html][TimeUnit]] units. Uses Apache Commons Math.|
+|N/A|[[./apidocs/com/oaktree/core/memory/Memory][Memory]]|A class to get and render memory statistics for an application|
+|N/A|[[./apidocs/com/oaktree/core/types/MutableDouble][MutableDouble]],[[./apidocs/com/oaktree/core/types/MutableInteger][MutableInteger]]|Classes to provide object wrappers of primatives that are mutable.|
+|N/A|[[./apidocs/com/oaktree/core/search/ReverseBinarySearch][ReverseBinarySearch]]|Searches a set of numbers that are sorted in reverse order using a binary chop|
+|N/A|[[./apidocs/com/oaktree/core/utils/ClockResolution][ClockResolution]]|A utility that can run to dispay the results of various timing operations on a machine. Useful to know the lowest granularity a machine/OS can schedule and wait.|
+|N/A|[[./apidocs/com/oaktree/core/utils/WriteSpeedTest][WriteSpeedTest]]|A utility to test the writing speed of a system. Useful for judging writing impact over different architectures and setups e.g. logging latency|
+|[[./apidocs/com/oaktree/core/time/ITimeScheduler][ITimeScheduler]]|[[./apidocs/com/oaktree/core/time/MultiTimeScheduler][MultiTimeScheduler]]|An abstract concept of time. Systems that consistently utilise this interface/implementation of time rather than direct System calls (currentMillis) allow time to be warped. Useful for replaying scenarios at different speeds, e.g for regression or backtesting.|
+|[[./apidocs/com/oaktree/core/pool/IPool][IPool]]|[[./apidocs/com/oaktree/core/poo/SimplePool][SimplePool]]|A simple expandable object pool built for concurrent environments. Exhibits better performance than other open source pools, and object creation/cleanup.|

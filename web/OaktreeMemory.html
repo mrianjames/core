@@ -1,0 +1,37 @@
+${import=OaktreeHeader.html}
+
+        <div id="page-wrapper">
+        	<div class="row"/>
+        	<br/>
+        	${table_binding=(Heap)[Time,Init,Committed,Used,Max][memory.getSnapshots(Heap):time,init,committed,used,max]}
+            ${table_binding=(NonHeap)[Time,Init,Committed,Used,Max][memory.getSnapshots(NonHeap):time,init,committed,used,max]}
+            ${table_binding=(EdenSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Eden Space):time,init,committed,used,max]}
+            ${table_binding=(TenuredGen)[Time,Init,Committed,Used,Max][memory.getSnapshots(Tenured Gen):time,init,committed,used,max]}
+            ${table_binding=(SurvivorSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Survivor Space):time,init,committed,used,max]}
+            ${table_binding=(CodeCache)[Time,Init,Committed,Used,Max][memory.getSnapshots(Code Cache):time,init,committed,used,max]}
+        </div>
+        <!-- /#page-wrapper -->
+        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
+       
+    
+${import=OaktreeTail.html}
+<script>
+    $(document).ready(function() {
+        $('#table_Heap').dataTable();
+    });
+    $(document).ready(function() {
+        $('#table_NonHeap').dataTable();
+    });
+    $(document).ready(function() {
+        $('#table_EdenSpace').dataTable();
+    });
+    $(document).ready(function() {
+        $('#table_TenuredGen').dataTable();
+    });
+    $(document).ready(function() {
+        $('#table_SurvivorSpace').dataTable();
+    });
+    $(document).ready(function() {
+        $('#table_CodeCache').dataTable();
+    });
+</script>

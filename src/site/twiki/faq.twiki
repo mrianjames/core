@@ -1,0 +1,15 @@
+---+ FAQ
+
+   * Why? Over many years a lot of time has been spent building similar classes to help build low latency multithreaded systems. Its a waste of time - lets just maintain and improve this library.
+   * Is it limited to finance applications? No, applicable for any problem domain.
+   * Whats an [[./apidocs/com/oaktree/core/threading/dispatcher/IDispatcher][IDispatcher]]? Its a thread pool which allows you to think in terms of logical "keys" to sequence events up on. This means you something with a certain "key" will receive events in order and will essentially be single threaded to simply development.
+   * Whats a [[./apidocs/com/oaktree/core/container/IComponent][IComponent]]? A component is a pojo that has a name, type, subtype for system lookups, and a simple state model. Components are also optionally receivers of IMessage objects from other areas of the system.
+   * Whats a [[./apidocs/com/oaktree/core/container/ComponentManager][ComponentManager]]? A registry of component objects. Allows other areas to lookup components by name, type and/or subtype.
+   * Whats an [[./apidocs/com/oaktree/core/container/IContainer][IContainer]]? A container is a central conduit of a system that performs the task of routing messages between components using the dispatcher and component manager.
+   * How do i build the library? Get the source and use maven to build e.g. mvn install
+   * Why not use J2EE? Its too generic and built for flexibility for many different types of applications rather than specifically for low latency systems.
+   * Frameworks in general are not performant for low latency applications. How does this differ? It is true that normally decoupling components costs, especially in concurrent applications. This library has focussed on reducing contention such that wait time (the major cause of multithreaded performance problems) is reduced to the minimal amount. So, how fast is it? Consider the following scenario - component A sends a message via the container that dispatches it to component B, which in turn responds to A in the same manor. This "ping-pong" test reveals average latency of 1.1us using a mapped dispatcher, 3us using a normal dispatcher.
+   * You have a pooling implementation. Why? There are cases for pools of objects, even in the modern era when object creation and gc are cheap. Firstly, object creation is cheap but not free. As is GC. Even paralell STW. So if you can minimise the number of STW then you reduce the impact on your top end latencies. Secondly, existing open source pools seem awful when performance tested and as usual exhibit worsening performance in concurrent tests. Check out [[./apidocs/com/oaktree/core/pool/SimplePool][SimplePool]]
+      
+	 		
+	
