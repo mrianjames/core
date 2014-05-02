@@ -1,4 +1,6 @@
 target
+allocation.jar
+.svn
 .classpath
 .project
 *.iml
