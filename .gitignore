@@ -14,3 +14,9 @@ target
 allocation.jar
 .DS_Store
 *.properties
+allocation.jar
+.svn
+.classpath
+.project
+*.iml
+.settings

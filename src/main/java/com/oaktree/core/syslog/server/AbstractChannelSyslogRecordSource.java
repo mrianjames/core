@@ -109,6 +109,7 @@ public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRe
     	this.thread.start();
     }
 
+<<<<<<< HEAD
 	protected void read() throws IOException {
 		ByteBuffer buffer = ByteBuffer.allocate(1024);
 		
@@ -121,6 +122,15 @@ public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRe
     CharsetDecoder getDecoder() {
         return decoder;
     }
+=======
+	private void read() throws IOException {
+		ByteBuffer buffer = ByteBuffer.allocate(1024);
+		
+		((ReadableByteChannel)channel).read(buffer);
+		CharBuffer cb = decoder.decode(buffer);
+		System.out.println(cb.toString());
+	}
+>>>>>>> 426dd0eb3474e0dd4b23ed9d039174b68fb9fbba
 	
 	@Override
 	public void start() {
