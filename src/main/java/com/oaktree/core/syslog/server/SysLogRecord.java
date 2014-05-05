@@ -1,5 +1,8 @@
 package com.oaktree.core.syslog.server;
 
+import com.oaktree.core.syslog.SyslogUtils;
+import com.oaktree.core.utils.Text;
+
 public class SysLogRecord implements ISysLogRecord {
 
 	private long timestamp;
@@ -47,4 +50,8 @@ public class SysLogRecord implements ISysLogRecord {
 		return tag;
 	}
 
+	@Override
+	public String toString() {
+		return "<"+SyslogUtils.resolvePriority(facility, severity)+"> "+ SyslogUtils.syslogTS.get().format(timestamp) +Text.SPACE+ip+Text.SPACE+tag+Text.SPACE+message;
+	}
 }

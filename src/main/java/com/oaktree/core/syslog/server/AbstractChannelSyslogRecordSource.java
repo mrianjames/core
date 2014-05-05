@@ -1,14 +1,14 @@
 package com.oaktree.core.syslog.server;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.Channel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.oaktree.core.container.ComponentState;
-import com.oaktree.core.container.ComponentType;
 
 public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRecordSource implements
 		ISysLogRecordSource {
@@ -28,9 +27,7 @@ public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRe
 	private int port;
 	private SelectableChannel channel;
 	public AbstractChannelSyslogRecordSource(String name,int port) {
-		setName(name);
-		setComponentType(ComponentType.SERVICE);
-		setComponentSubType("SyslogRecordChannelSource");
+		super(name);
 		this.port = port;
 	}
 	public int getPort() {
@@ -68,7 +65,7 @@ public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRe
     				//if (channel.isConnected()) {
     					logger.info(getName()+" Connected and waiting...");
     					while (selector.select() > 0) {
-    						logger.info(getName()+" Im in");
+    						//logger.info(getName()+" Im in");
     						Set readyKeys = selector.selectedKeys();
     					    Iterator i = readyKeys.iterator();
 
@@ -77,23 +74,28 @@ public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRe
     							SelectionKey sk = (SelectionKey)i.next();
     							i.remove();
     							if (sk.isReadable()) {
-    								logger.info(getName()+" Reading...");
-    								read();
+    								//logger.info(getName()+" Reading...");
+    								read(sk.channel());
     							}
     							if (sk.isAcceptable()) {
-    								logger.info(getName()+" Accepting");
-    								ServerSocketChannel nextReady = 
-    									    (ServerSocketChannel)sk.channel();
-    								Socket s = nextReady.accept().socket();
-    								byte[] buffer = new byte[1024];
-    								while (true) {    									
-    									int read = s.getInputStream().read(buffer);
-    									if (read > 0) {
-    										System.out.println("in: "+new String(buffer,0,read).trim());
-    									}
-    									LockSupport.parkNanos(10000);
-    								}
+    								//logger.info(getName()+" Accepting");
+//    								ServerSocketChannel nextReady = 
+//    									    (ServerSocketChannel)sk.channel();
+//    								Socket s = nextReady.accept().socket();
+//    								nextReady.register(selector, SelectionKey.OP_READ);
+//    								byte[] buffer = new byte[1024];
+//    								while (true) {    									
+//    									int read = s.getInputStream().read(buffer);
+//    									if (read > 0) {
+//    										System.out.println("in: "+new String(buffer,0,read).trim());
+//    									}
+//    									LockSupport.parkNanos(10000);
+//    								}
     								//read();
+    								ServerSocketChannel channel = (ServerSocketChannel)(sk.channel());
+    								SocketChannel client = channel.accept();
+    								client.configureBlocking(false);
+    								SelectionKey clientKey = client.register(selector, SelectionKey.OP_READ);    								
     							}
     					    }
     			    	}	
@@ -109,13 +111,18 @@ public abstract class AbstractChannelSyslogRecordSource extends AbstractSyslogRe
     	this.thread.start();
     }
 
-	protected void read() throws IOException {
-		ByteBuffer buffer = ByteBuffer.allocate(1024);
-		
-		((ReadableByteChannel)channel).read(buffer);
-
-		CharBuffer cb = decoder.decode(buffer);
-		System.out.println(cb.toString());
+    private ByteBuffer buffer = ByteBuffer.allocate(1024);
+	protected void read(Channel c) throws IOException {
+		buffer.clear();
+		int read = ((SocketChannel)c).read(buffer);
+		if (read > 0) {
+			buffer.flip();
+			CharBuffer cb = decoder.decode(buffer);
+			//System.out.println(cb.toString());
+			this.onStringMessage(cb.toString());
+		} 
+		//else no data.
+		LockSupport.parkNanos(10); //micro sleep to save cpu burn.
 	}
 
     CharsetDecoder getDecoder() {

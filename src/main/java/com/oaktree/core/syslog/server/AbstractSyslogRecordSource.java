@@ -1,28 +1,28 @@
 package com.oaktree.core.syslog.server;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
 
-import com.oaktree.core.container.AbstractComponent;
+import com.oaktree.core.patterns.sequence.DataSequence;
+import com.oaktree.core.syslog.SyslogUtils;
 import com.oaktree.core.utils.Text;
 
-public class AbstractSyslogRecordSource extends AbstractComponent implements
-		ISysLogRecordSource {
-	private Collection<ISysLogRecordListener> srcListeners = new ArrayList<ISysLogRecordListener>();
-	
-	public void addListener(ISysLogRecordListener listener) {
-		srcListeners.add(listener);
+public class AbstractSyslogRecordSource extends DataSequence<ISysLogRecord,ISysLogRecord> {
+
+	public AbstractSyslogRecordSource(String name) {
+		super(name);
 	}
-	public void setSyslogRecordListener(ISysLogRecordListener listener) {
-		this.srcListeners.add(listener);
-	}
+	//	private Collection<ISysLogRecordListener> srcListeners = new ArrayList<ISysLogRecordListener>();
+//	
+//	public void addListener(ISysLogRecordListener listener) {
+//		srcListeners.add(listener);
+//	}
+//	public void setSyslogRecordListener(ISysLogRecordListener listener) {
+//		this.srcListeners.add(listener);
+//	}
 	private final static char LSB = '<';
 	private final static char RSB = '>';
 	
-	private DateFormat tsf = new SimpleDateFormat("MMM dd HH:mm:ss");
+	//private DateFormat tsf = new SimpleDateFormat("MMM dd HH:mm:ss");
 	
 	/**
 	 * Parse and notify the string message.
@@ -30,42 +30,41 @@ public class AbstractSyslogRecordSource extends AbstractComponent implements
 	 * @param msg
 	 */
 	public void onStringMessage(String msg) {
+		if (msg == null || msg.length() == 0) {
+			return;
+		}
 		int lb1 = msg.indexOf(LSB);
 		int rb1 = msg.indexOf(RSB);
-		String sp = msg.substring(lb1, rb1-1);
+		String sp = msg.substring(lb1+1, rb1);
 		int priority = Integer.valueOf(sp);
-		int facility = getFacility(priority);
-		int severity = getSeverity(priority);
-		int endTimestampIndex = rb1+15;
-		String strTimestamp = msg.substring(rb1, endTimestampIndex-1);
+		int facility = SyslogUtils.getFacility(priority);
+		int severity = SyslogUtils.getSeverity(priority);
+		int endTimestampIndex = rb1+16;
+		String strTimestamp = msg.substring(rb1+1, endTimestampIndex);
 		long timestamp = 0;
 		try {
-			timestamp = tsf.parse(strTimestamp).getTime();
+			timestamp = SyslogUtils.syslogTS.get().parse(strTimestamp).getTime();
 		} catch (ParseException e) {
 			logger.warn("Cannot parse message timestamp",e);
 		}
-		int endIpIndex = msg.indexOf(Text.SPACE,endTimestampIndex);
-		String ip = msg.substring(endTimestampIndex,endIpIndex-1);
+		int endIpIndex = msg.indexOf(Text.SPACE,endTimestampIndex+1);
+		String ip = msg.substring(endTimestampIndex+1,endIpIndex);
 		
-		int endTagIndex = msg.indexOf(Text.SPACE,endIpIndex);
-		String tag = msg.substring(endIpIndex,endTagIndex-1);
-		String message = msg.substring(endTagIndex);
+		int endTagIndex = msg.indexOf(Text.SPACE,endIpIndex+1);
+		String tag = msg.substring(endIpIndex+1,endTagIndex);
+		String message = msg.substring(endTagIndex+1);
 		this.onMessage(facility,severity,timestamp,ip,tag,message);
 	}
 	protected void onMessage(int facility, int severity, long timestamp,
 			String ip, String tag, String message) {
 		SysLogRecord record = new SysLogRecord(facility,severity,timestamp,ip,tag,message);
-		for (ISysLogRecordListener listener:srcListeners) {
-			listener.onSysLogRecord(record);
-		}
+		this.onData(record, this, getTime());
 	}
 	
-	private int getSeverity(int priority) {
-		return priority & 0x07;
+	private long getTime() {
+		return System.currentTimeMillis();
 	}
-	private int getFacility(int priority) {
-		return priority >> 3;
-	}
+
 	
 	
 }

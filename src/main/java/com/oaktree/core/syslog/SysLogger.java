@@ -1,12 +1,5 @@
 package com.oaktree.core.syslog;
 
-import com.oaktree.core.container.AbstractComponent;
-import com.oaktree.core.container.ComponentState;
-import com.oaktree.core.container.ComponentType;
-import com.oaktree.core.utils.Text;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -18,6 +11,16 @@ import java.nio.channels.SocketChannel;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.oaktree.core.container.ComponentState;
+import com.oaktree.core.patterns.sequence.DataSequence;
+import com.oaktree.core.patterns.sequence.IDataProvider;
+import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.syslog.server.ISysLogRecord;
+import com.oaktree.core.utils.Text;
 
 /**
  * Log messages to std syslog formats.
@@ -58,7 +61,7 @@ import java.util.Date;
  * @author ij
  *
  */
-public class SysLogger extends AbstractComponent {
+public class SysLogger extends DataSequence<ISysLogRecord, ISysLogRecord> implements IDataReceiver<ISysLogRecord> {
 	private final static Logger logger = LoggerFactory.getLogger(SysLogger.class);
 	private static final int DEFAULT_UDP_PORT = 514;
 	private static final int DEFAULT_TCP_PORT = 1468;
@@ -70,7 +73,17 @@ public class SysLogger extends AbstractComponent {
 	
 	private String tag;
 	private String ip;
+	public SysLogger(String name) {
+		super(name);
+		this.protocol = Protocol.UDP;
+		try {
+			this.host = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+			logger.error("Cannot resolve host" + host,e);
+		}
+	}
 	public SysLogger(String programName, String loggerName) {
+		super(loggerName);
 		this.programName = programName;
 		this.protocol = Protocol.UDP;
 		try {
@@ -78,12 +91,11 @@ public class SysLogger extends AbstractComponent {
 		} catch (UnknownHostException e) {
 			logger.error("Cannot resolve host" + host,e);
 		}
-		setComponent(loggerName);
 	}
 	public SysLogger(String programName, String loggerName, String url) {
+		super(loggerName);
 		this.programName = programName;
 		parseUrl(url);
-		setComponent(loggerName);
 		setTag();
 	}
 	private void setTag() {
@@ -148,10 +160,11 @@ public class SysLogger extends AbstractComponent {
 			} else {
 				throw new IllegalStateException("Invalid procol" + protocol.name());
 			}
-			logger.info("initialised syslogger "+toString());
 			if (channel.isOpen()) {
 				setState(ComponentState.AVAILABLE);
-			}			
+			}
+			logger.info("initialised syslogger "+toString());
+			
 		} catch (Exception e) {
 			logger.error("Cannot open connection: ",e);
 			setState(ComponentState.UNAVAILABLE);
@@ -192,34 +205,35 @@ public class SysLogger extends AbstractComponent {
 	public String toString() {
 		return programName+"."+getName()+" ["+protocol.name()+"] "+ host.getCanonicalHostName()+"["+host.getHostAddress()+"]:"+port+Text.SPACE+getState().name() ;
 	}
-	
-	private void setComponent(String loggerName) {
-		this.setName(loggerName);
-		this.setComponentType(ComponentType.SERVICE);
-		this.setComponentSubType("SysLog");
-	}
+
 
 	public void log(int priority, String message) {
+		log(priority,message,tag,getTimestamp(),getIp());
+	}
+	private void log(int priority,String message, String tag, long timestamp, String ip) {
 		try {
 			if (protocol.isUdp()) {
-				logUdp(priority,message);
+				logUdp(priority,message,tag,timestamp,ip);
 			} else {
-				logTcp(priority,message);
+				logTcp(priority,message,tag,timestamp,ip);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("Cannot send message " ,e);
 		}
 	}
-	private void logTcp(int priority, String message) throws IOException {
-		((SocketChannel)channel).write(makeBuffer(priority,message));
+	private void log(ISysLogRecord data) {
+		log(SyslogUtils.resolvePriority(data.getFacility(), data.getSeverity()),data.getMessage(),data.getTag(),data.getTimestamp(),data.getHost());
 	}
-	private void logUdp(int priority, String message) throws IOException {
-		((DatagramChannel)channel).write(makeBuffer(priority,message));
+	private void logTcp(int priority, String message, String tag, long timestamp, String ip) throws IOException {
+		((SocketChannel)channel).write(makeBuffer(priority,message,tag,timestamp,ip));
 	}
-	private ByteBuffer makeBuffer(int priority, String message) {
+	private void logUdp(int priority, String message, String tag, long timestamp, String ip) throws IOException {
+		((DatagramChannel)channel).write(makeBuffer(priority,message,tag,timestamp,ip));
+	}
+	private ByteBuffer makeBuffer(int priority, String message, String tag, long timestamp,String ip) {
 		ByteBuffer buf = ByteBuffer.allocate(1024);
-		String msg = makeMsg(priority,message);
+		String msg = makeMsg(priority,message,tag,timestamp,ip);
 		if (logger.isInfoEnabled()) {
 			logger.info("OUT: " + msg);
 		}
@@ -228,11 +242,11 @@ public class SysLogger extends AbstractComponent {
 		return buf;
 	}
 	private DateFormat tsf = new SimpleDateFormat("MMM dd HH:mm:ss");
-	private String makeMsg(int priority, String message) {
-		return "<"+priority+">"+getHeader()+Text.SPACE+tag+Text.SPACE+message;
+	private String makeMsg(int priority, String message, String tag, long timestamp, String ip) {
+		return "<"+priority+">"+getHeader(timestamp,ip)+Text.SPACE+tag+Text.SPACE+message;
 	}
-	private String getHeader() {
-		return tsf.format(new Date(getTimestamp()))+Text.SPACE+getIp();
+	private String getHeader(long timestamp,String ip) {
+		return tsf.format(new Date(timestamp))+Text.SPACE+ip;
 		//return "";
 	}
 	private String getIp() {
@@ -242,12 +256,17 @@ public class SysLogger extends AbstractComponent {
 		return System.currentTimeMillis();
 	}
 	public void log(int facility,int severity, String message) {
-		int priority = resolvePriority(facility,severity);
+		int priority = SyslogUtils.resolvePriority(facility,severity);
 		log(priority,message);
 	}
 	
-	private int resolvePriority(int facility, int severity) {
-		return (facility * 8)+severity;
+	
+	@Override
+	public void onData(ISysLogRecord data, IDataProvider<ISysLogRecord> from,
+			long receivedTime) {
+		this.log(data);
+		super.onData(data,this,receivedTime);
 	}
+
 
 }

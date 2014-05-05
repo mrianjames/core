@@ -27,11 +27,7 @@ public class TcpChannelSyslogRecordSource extends
 		    //todo interface
 		    InetSocketAddress add = new InetSocketAddress("127.0.0.1",getPort());
 		    socket.bind(add);
-		    
 		    c.configureBlocking(false);
-
-		    
-		    //OP_ACCEPT
 			return c;
 		} catch (IOException e) {
 			e.printStackTrace();
