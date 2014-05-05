@@ -1,0 +1,19 @@
+${import=OaktreeHeader.html}
+
+        <div id="page-wrapper">
+        	<div class="row"/>
+        	<br/>
+        	${table_binding=(Dispatcher)[Time,TotalExecCnt,TotalQueuedCount][dispatcher.getSnapshots():timestamp,totalExecCount,totalQueuedCount]}
+            
+        </div>
+        <!-- /#page-wrapper -->
+        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
+       
+    
+${import=OaktreeTail.html}
+<script>
+    $(document).ready(function() {
+        $('#table_Dispatcher').dataTable();
+    });
+
+</script>

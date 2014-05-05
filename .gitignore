@@ -1,0 +1,16 @@
+target
+*.iml
+.classpath
+.settings
+.project
+*.log
+.svn
+*.data
+*.csv
+.idea
+*.index
+*.bl
+*.txt
+allocation.jar
+.DS_Store
+*.properties

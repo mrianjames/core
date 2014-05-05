@@ -1,0 +1,56 @@
+${import=OaktreeHeader.html}
+
+        <div id="page-wrapper">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">GC ${service.getString()}</h1>
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+            <!-- /.row -->
+            <div class="row">
+                <div class="col-lg-8">
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <i class="fa fa-bar-chart-o fa-fw"></i> GC Events.
+                            <div class="pull-right">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                                        Actions
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu pull-right" role="menu">
+                                        <li><a href="#">Refresh</a>
+                                        </li>
+                                        
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover table-striped">
+                                        ${table_binding=[Time,Type,Before,After][service.getGCData():time,type,before,after]}
+                                        
+                                        </table>
+                                    </div>
+                                    <!-- /.table-responsive -->
+                                </div>                                
+                            </div>
+                            <!-- /.row -->
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    
+
+                        
+                <!-- /.col-lg-4 -->
+            </div>
+            <!-- /.row -->
+        </div>
+        <!-- /#page-wrapper -->
+${import=OaktreeTail.html}

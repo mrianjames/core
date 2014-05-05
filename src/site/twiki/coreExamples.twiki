@@ -1,0 +1,135 @@
+---+++ Core Examples
+
+---++++ Create a component
+
+<verbatim>
+public class MyComponent extends AbstractComponent { 
+...
+} 
+... 
+IComponent c = new MyComponent();
+c.setName("TestComponent");
+c.setComponentType(ComponentType.DOWNSTREAM);
+c.setComponentSubType("XLON");
+c.initialise();
+c.start();
+</verbatim>
+
+---++++ Registering a component with a component manager
+
+<verbatim>
+IComponent c = new MyComponent();
+cmanager.addComponent(c);
+</verbatim>
+
+---++++ Create a message and send to a component
+
+<verbatim>
+IComponent c = new MyComponent();
+IMessage m = MessageFactory.makeMessage("STRATEGYA",MessageType.APPLICATION,
+ComponentType.DOWNSTREAM,"XLON","HELLO DOWNSTREAM",this,"");
+c.onMessage(m);
+</verbatim>
+
+---++++ Creating a Container
+
+<verbatim>
+IContainer container = new Container();
+
+IComponent upstream = new ExampleUpstream();
+upstream.setComponentType(ComponentType.UPSTREAM);
+upstream.setComponentSubtype("OMS_A");
+upstream.setName("UPSTREAM_OMSA");
+upstream.setMessageListener(container);
+
+IComponent downstream = new ExampleDownstream();
+downstream.setComponentType(ComponentType.DOWNSTREAM);
+downstream.setComponentSubtype("XLON");
+downstream.setName("DOWNSTREAM_XLON");
+downstream.setMessageListener(container);
+
+IDispatcher dispatcher = new Dispatcher();
+dispatcher.setThreads(3);
+dispatcher.start();
+
+IComponentManager cmanager = new ComponentManager();
+cmanager.addComponent(upstream);
+cmanager.addComponent(downstream);
+//create a factory for making strategies from incoming orders
+IDynamicComponentFactory strategyFactory = new StrategyFactory();
+cmanager.setDynamicComponentFactory(strategyFactory);
+container.setComponentManager(cmanager);
+
+container.initialise(); /*This will initialise the cm, which inits all its c'nents */
+container.start(); /* This will start the cm, which starts all the components*/
+</verbatim>
+
+---++++ Writing an Upstream
+
+A common component of a trading system using the Core framework is to create a component to handle order flow from an upstream system. For example:
+<verbatim>
+public void FixUpstream extends AbstractComponent {
+...
+  public void onIncomingFixMessage(FixMessage fm) {
+     IMessage msga = marshaller.marshallFixMessageToMessage(fm);
+     //or
+     IMessage msgb = MessageFactory.makeMessage(fm.getClOrdID(),
+          MessageType.APPLICATION,ComponentType.DYNAMIC_COMPONENT_FACTORY,
+          "",fm,this,"");
+     this.messageListener.onMessage(msgb);//or msga   
+}
+</verbatim>
+
+---++++ Using a dispatcher
+
+<verbatim>
+IDispatcher dispatcher = new Dispatcher();
+dispatcher.setThreads(3);
+dispatcher.start();
+dispatcher.dispatch("AAA",new Runnable(){
+     public void run() {
+        	//hurrah!
+     }
+});
+</verbatim>
+
+---++++ IdGenerator
+
+<verbatim>
+IIdGenerator idgen = new IdGenerator("ALGO1","ORDER");
+String id = idgen.next();
+</verbatim>
+
+---++++ Using ResultTimer
+
+<verbatim>
+ResultTimer t = new ResultTimer;
+for (int i = 0; i < OPERATIONS;i++) {
+  t.startSample();
+ ...do operation
+  t.endSample();
+}
+System.out.println(t.toString(TimeUnit.MICROSECONDS));
+</verbatim>
+
+---++++ Using LatencyRecorder
+
+<verbatim>
+int buffersz = 10000; //size of arrays as number of records
+int flushtime = 1000; //time in ms to do flushes.
+FileWriter filewriter = new FileWriter(new File("latency.csv"));
+ILatencyWriter iowriter = new IOLatencyWriter(filewriter,buffersz);
+ILatencyRecorder recorder = new LatencyRecorder(iowriter,buffersz,flushtime);
+recorder.initialise();
+recorder.start();
+...
+recorder.begin("UPSTREAM","NOS","ABC123234",null);
+//or
+long time = System.nanoTime();
+recorder.beginAt("UPSTREAM","NOS","ABC123234",null);
+//do section work
+recorder.begin("UPSTREAM","NOS","ABC123234",null);
+//or
+time = System.nanoTime();
+recorder.endAt("UPSTREAM","NOS","ABC123234",null);
+</verbatim>
