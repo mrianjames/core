@@ -17,7 +17,7 @@ public interface IDataProvider<T> extends IComponent {
 	/**
 	 * Add a single receiver to this provider.
 	 * 
-	 * @param listener
+	 * @param receiver
 	 */
 	public void addDataReceiver(IDataReceiver<T> receiver);
 	
@@ -40,4 +40,22 @@ public interface IDataProvider<T> extends IComponent {
 	 * @param receiver
 	 */
 	public void removeReceiver(IDataReceiver<T> receiver);
+
+    /**
+     * A receiver of our data may make explicit interest requests.
+     * Our implementation will decide if we do anything with this,
+     * we may be listening for all data anyway (*).
+     * You should expect to have duplicate requests and handle accordingly
+     * i.e. dont deluge source system with duplicate requests.
+     *
+     * @param key
+     */
+    public void registerInterest(Object key,IDataReceiver<T> from);
+
+    /**
+     * Remove an interest
+     *
+     * @param key
+     */
+    public void removeInterest(Object key, IDataReceiver<T> from);
 }

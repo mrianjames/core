@@ -21,7 +21,8 @@ public class JavaTime implements ITime {
 
     @Override
     public long getNanoTime() {
-        return System.nanoTime();
+        //return System.nanoTime();
+        return System.currentTimeMillis()*1000000;
     }
 
     @Override

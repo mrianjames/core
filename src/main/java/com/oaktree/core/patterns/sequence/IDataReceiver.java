@@ -17,5 +17,5 @@ public interface IDataReceiver<T> extends IComponent {
 	 * @param from
 	 * @param receivedTime
 	 */
-	public void onData(T data, IDataProvider<T> from, long receivedTime);
+	public void onData(T data, IComponent from, long receivedTime);
 }
