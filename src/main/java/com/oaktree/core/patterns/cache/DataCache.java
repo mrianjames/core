@@ -3,6 +3,7 @@ package com.oaktree.core.patterns.cache;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oaktree.core.container.AbstractComponent;
+import com.oaktree.core.container.IComponent;
 import com.oaktree.core.patterns.sequence.IDataProvider;
 
 /**
@@ -35,7 +36,7 @@ public class DataCache<T extends IData<K>,K> extends AbstractComponent implement
 	}
 	
 	@Override
-	public void onData(T data, IDataProvider<T> from, long receivedTime) {
+	public void onData(T data, IComponent from, long receivedTime) {
 		cache.put(data.getDataKey(),data);
 		if (logger.isTraceEnabled()) {
 			logger.trace(getName() + " stored: " + data + " from " + from + " received at " + receivedTime);

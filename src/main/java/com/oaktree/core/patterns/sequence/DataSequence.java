@@ -3,10 +3,12 @@
  */
 package com.oaktree.core.patterns.sequence;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.oaktree.core.container.IComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,8 +130,18 @@ public class DataSequence<I,O> extends AbstractComponent implements IDataSequenc
 		receivers.remove(receiver);
 	}
 
-	@Override
-	public void onData(I data, IDataProvider<I> from, long receivedTime) {		
+    @Override
+    public void registerInterest(Object key, IDataReceiver<O> from) {
+
+    }
+
+    @Override
+    public void removeInterest(Object key, IDataReceiver<O> from) {
+
+    }
+
+    @Override
+	public void onData(I data, IComponent from, long receivedTime) {
 		//do what you need with the data...then distribute the result.
 		O updated = process(data,from,receivedTime);
 		for (IDataReceiver<O> sink: receivers) {
@@ -147,7 +159,7 @@ public class DataSequence<I,O> extends AbstractComponent implements IDataSequenc
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	protected O process(I data, IDataProvider<I> from, long receivedTime) {
+	protected O process(I data, IComponent from, long receivedTime) {
 		if (log ) {
 			log(data,from,receivedTime);
 		}
@@ -160,7 +172,7 @@ public class DataSequence<I,O> extends AbstractComponent implements IDataSequenc
 	 * @param from
 	 * @param receivedTime
 	 */
-	protected void log(I data, IDataProvider<I> from, long receivedTime) {
+	protected void log(I data, IComponent from, long receivedTime) {
 		if (!log) {
 			return;
 		}

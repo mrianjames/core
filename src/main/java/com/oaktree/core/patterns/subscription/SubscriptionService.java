@@ -20,7 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is an archetype service to facilitate the subscription and retrieval of
@@ -56,6 +59,7 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
 
     /**
      * Map of subscription collections keyed on the subscription key.
+     * Concurrent
      */
     private IMultiMap<String,ISubscriptionRequest<T>> requests = new MultiMap<String,ISubscriptionRequest<T>>(new HashMapFactory<String,Collection<ISubscriptionRequest<T>>>(100,true),new SetFactory<ISubscriptionRequest<T>>(10,true));
 
@@ -87,38 +91,61 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
 
     @Override
     public ISubscriptionResponse<T> subscribe(ISubscriptionRequest<T> request) {
-        if (logger.isInfoEnabled()) {
-            logger.info(getName() + " subscription: " + request);
-        }
+        //can be concurrent at this stage...
         SubscriptionResponse response = new SubscriptionResponse();
-        if (request.getSubscriptionType().isSnap()) {
-            T snap = cache.snap(request.getKey());
-            response.setInitial(snap);
-            response.setSubscriptionResult(SubscriptionResult.SUBSCRIPTION_OK);
-            if (request.getSubscriptionType().isAsyncSnap()) {
-                request.getDataReceiver().onData(snap,this,getTime());
+        try {
+            if (logger.isInfoEnabled()) {
+                logger.info(getName() + " subscription: " + request);
             }
-        }
-        if (request.getSubscriptionType().isSubscribe()) {
-            response.setSubscriptionResult(doSubscribe(request));
+
+            if (request.getSubscriptionType().isSnap()) {
+                T snap = cache.snap(request.getKey());
+                response.setInitial(snap);
+                response.setSubscriptionResult(SubscriptionResult.SUBSCRIPTION_OK);
+                if (request.getSubscriptionType().isAsyncSnap()) {
+                    request.getDataReceiver().onData(snap, this, getTime());
+                }
+            }
+            if (request.getSubscriptionType().isSubscribe()) {
+                response.setSubscriptionResult(doSubscribe(request));
+            }
+        } catch (Throwable t) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Failed subscription request " + request, t);
+            }
+            response.setSubscriptionResult(SubscriptionResult.SUBSCRIPTION_FAILURE);
+            response.setInitial(null);
+            response.setFailureReason(t.getMessage());
         }
 
         return response;
     }
 
+    @Override
+    public IUnsubscribeResponse<T> unsubscribe(IUnsubscribeRequest<T> request) {
+        return null;
+    }
+
+    /**
+     * The work of subscribing to a request. Manage the subscription, passing on
+     * any interest to any found provider that is deemed worthy.
+     * @param request
+     * @return
+     */
     private SubscriptionResult doSubscribe(ISubscriptionRequest<T> request) {
+        synchronized (request) { //TODO review.
+            if (logger.isTraceEnabled()) {
+                logger.trace("Adding request..." + request);
+            }
+            requests.put(request.getKey(), request);
 
-        if (logger.isTraceEnabled()) {
-            logger.trace("Adding request..."+request);
+            //resolve source of data to pass request onto...they might not be interested in our key, but
+            //some will do further subscriptions to external systems on our behalf, so nice to tell them what we want.
+            Collection<IDataProvider<T>> providers = resolveProviders(request.getKey());
+            for (IDataProvider<T> provider:providers) {
+               provider.registerInterest(request.getKey(),this);
+            }
         }
-        requests.put(request.getKey(), request);
-        //resolve source of data to pass request onto...they might not be interested in our key, but
-        //some will do further subscriptions to external systems on our behalf, so nice to tell them what we want.
-        Collection<IDataProvider<T>> providers = resolveProviders(request.getKey());
-        for (IDataProvider<T> provider:providers) {
-            provider.registerInterest(request.getKey(),this);
-        }
-
         return SubscriptionResult.SUBSCRIPTION_OK;
     }
 
@@ -140,6 +167,8 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
 
     public void addProvider(IDataProvider<T> provider) {
         providers.add(provider);
+        //in-case. hope its a set!
+        provider.addDataReceiver(this);
     }
     /**
      * Simple spring inject
@@ -157,25 +186,50 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
 
     @Override
     public void onData(final T data, IComponent from, final long receivedTime) {
-        cache.onData(data, from, receivedTime);
-        this.distributeData(data,from,receivedTime);
+        try {
+            cache.onData(data, from, receivedTime);
+            this.distributeData(data,from,receivedTime);
+        } catch (Exception e) {
+            logger.error("Error handling data",e);
+        }
     }
+    private ConcurrentMap<String,Boolean> conflationPendingMap = new ConcurrentHashMap<String,Boolean>(20);
 
+
+    /**
+     * Pass data to all acceptable receivers who were interested. Dispatching is
+     * optional though advised (keyed on receiver name normally).
+     * Conflation is optional.
+     *
+     * @param data
+     * @param from
+     * @param receivedTime
+     */
     private void distributeData(final T data, final IComponent from, final long receivedTime) {
         Collection<ISubscriptionRequest<T>> matching = getMatchingRequests(data.getDataKey());
         for (final ISubscriptionRequest<T> request:matching) {
             if (dispatcher != null) {
-                dispatcher.dispatch(request.getDataReceiver().getName(), new Runnable(){
-                    public void run() {
-                        //TODO finish conflation.
-                        if (conflation) {
-                            T latest = cache.snap(data.getDataKey());
-                            request.getDataReceiver().onData(latest,SubscriptionService.this,receivedTime);
-                        } else {
-                            request.getDataReceiver().onData(data,SubscriptionService.this,receivedTime);
+                if (null == conflationPendingMap.putIfAbsent(data.getDataKey(),Boolean.TRUE)) {
+                    dispatcher.dispatch(request.getDataReceiver().getName(), new Runnable() {
+                        public void run() {
+                            try {
+                                if (conflation) {
+                                    T latest = cache.snap(data.getDataKey());
+                                    conflationPendingMap.remove(conflationPendingMap);
+                                    request.getDataReceiver().onData(latest, SubscriptionService.this, receivedTime);
+                                } else {
+                                    //skip the cache get, adds nothing.
+                                    request.getDataReceiver().onData(data, SubscriptionService.this, receivedTime);
+                                }
+                            } catch (Exception e) {
+                                logger.error("Error distributing data", e);
+                            }
                         }
-                    }
-                });
+                    });
+                } //we found one for this key.
+            } else {
+                //on thread that provider gave us data on...
+                request.getDataReceiver().onData(data,this,getTime());
             }
         }
     }

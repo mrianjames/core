@@ -12,6 +12,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.oaktree.core.container.IComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,11 +263,20 @@ public class SysLogger extends DataSequence<ISysLogRecord, ISysLogRecord> implem
 	
 	
 	@Override
-	public void onData(ISysLogRecord data, IDataProvider<ISysLogRecord> from,
+	public void onData(ISysLogRecord data, IComponent from,
 			long receivedTime) {
 		this.log(data);
 		super.onData(data,this,receivedTime);
 	}
 
 
+    @Override
+    public void registerInterest(Object key, IDataReceiver<ISysLogRecord> from) {
+
+    }
+
+    @Override
+    public void removeInterest(Object key, IDataReceiver<ISysLogRecord> from) {
+
+    }
 }
