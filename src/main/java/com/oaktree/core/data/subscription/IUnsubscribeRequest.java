@@ -1,6 +1,6 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
 
-import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.data.sequence.IDataReceiver;
 
 /**
  * A request for an unsubscribe.
@@ -14,6 +14,6 @@ public interface IUnsubscribeRequest<T> {
      */
     public IDataReceiver<T> getDataReceiver();
     public String getKey();
-    public SubscriptionType getSubscriptionType();
+    public int getSubscriptionType();
 
 }

@@ -1,4 +1,4 @@
-package com.oaktree.core.patterns.sequence;
+package com.oaktree.core.data.sequence;
 
 import com.oaktree.core.container.IComponent;
 

@@ -1,7 +1,7 @@
-package com.oaktree.core.patterns.cache;
+package com.oaktree.core.data.cache;
 
 import com.oaktree.core.container.IComponent;
-import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.data.sequence.IDataReceiver;
 
 /**
  * A cache of data.

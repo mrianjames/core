@@ -12,14 +12,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import com.oaktree.core.container.IComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.oaktree.core.container.ComponentState;
-import com.oaktree.core.patterns.sequence.DataSequence;
-import com.oaktree.core.patterns.sequence.IDataProvider;
-import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.container.IComponent;
+import com.oaktree.core.data.sequence.DataSequence;
+import com.oaktree.core.data.sequence.IDataReceiver;
 import com.oaktree.core.syslog.server.ISysLogRecord;
 import com.oaktree.core.utils.Text;
 

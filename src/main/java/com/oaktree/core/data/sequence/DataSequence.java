@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.oaktree.core.patterns.sequence;
+package com.oaktree.core.data.sequence;
 
 import java.awt.*;
 import java.util.ArrayList;

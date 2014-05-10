@@ -1,4 +1,13 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
+
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.oaktree.core.collection.HashMapFactory;
 import com.oaktree.core.collection.SetFactory;
@@ -7,23 +16,14 @@ import com.oaktree.core.collection.multimap.MultiMap;
 import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.ComponentType;
 import com.oaktree.core.container.IComponent;
-import com.oaktree.core.patterns.cache.DataCache;
-import com.oaktree.core.patterns.cache.IData;
-import com.oaktree.core.patterns.cache.IDataCache;
-import com.oaktree.core.patterns.sequence.IDataProvider;
-import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.data.cache.DataCache;
+import com.oaktree.core.data.cache.IData;
+import com.oaktree.core.data.cache.IDataCache;
+import com.oaktree.core.data.sequence.IDataProvider;
+import com.oaktree.core.data.sequence.IDataReceiver;
 import com.oaktree.core.threading.dispatcher.IDispatcher;
 import com.oaktree.core.time.ITime;
 import com.oaktree.core.time.JavaTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is an archetype service to facilitate the subscription and retrieval of
@@ -92,7 +92,7 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
     @Override
     public ISubscriptionResponse<T> subscribe(ISubscriptionRequest<T> request) {
         //can be concurrent at this stage...
-        SubscriptionResponse response = new SubscriptionResponse();
+        SubscriptionResponse<T> response = new SubscriptionResponse<T>();
         try {
             if (logger.isInfoEnabled()) {
                 logger.info(getName() + " subscription: " + request);
@@ -113,15 +113,15 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
                 return response;
             }
 
-            if (request.getSubscriptionType().isSnap()) {
+            if (SubscriptionType.isSnap(request.getSubscriptionType())) {
                 T snap = cache.snap(request.getKey());
                 response.setInitial(snap);
                 response.setSubscriptionResult(SubscriptionResult.SUBSCRIPTION_OK);
-                if (snap != null && request.getSubscriptionType().isAsyncSnap()) {
+                if (snap != null && SubscriptionType.isAsync(request.getSubscriptionType())) {
                     request.getDataReceiver().onData(snap, this, getTime());
                 }
             }
-            if (request.getSubscriptionType().isSubscribe()) {
+            if (SubscriptionType.isSubscribe(request.getSubscriptionType())) {
                 response.setSubscriptionResult(doSubscribe(request));
             }
         } catch (Throwable t) {

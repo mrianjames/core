@@ -1,7 +1,6 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
 
-import com.oaktree.core.container.INameable;
-import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.data.sequence.IDataReceiver;
 
 /**
  * A request for a subscription
@@ -15,6 +14,6 @@ public interface ISubscriptionRequest<T> {
      */
     public IDataReceiver<T> getDataReceiver();
     public String getKey();
-    public SubscriptionType getSubscriptionType();
+    public int getSubscriptionType();
 
 }

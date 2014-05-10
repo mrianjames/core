@@ -1,7 +1,7 @@
 package com.oaktree.core.syslog.server;
 
-import com.oaktree.core.patterns.sequence.DataSequence;
-import com.oaktree.core.patterns.sequence.LoggingDataReceiver;
+import com.oaktree.core.data.sequence.DataSequence;
+import com.oaktree.core.data.sequence.LoggingDataReceiver;
 import com.oaktree.core.syslog.SysLogger;
 
 public class SysLogServerMain {

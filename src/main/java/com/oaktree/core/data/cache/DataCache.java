@@ -1,10 +1,10 @@
-package com.oaktree.core.patterns.cache;
+package com.oaktree.core.data.cache;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.IComponent;
-import com.oaktree.core.patterns.sequence.IDataProvider;
+import com.oaktree.core.data.sequence.IDataProvider;
 
 /**
  * Simple firm cache implementation. We store objects of type T, which are keyed on type K.

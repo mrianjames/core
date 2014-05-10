@@ -1,17 +1,17 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
 
-import com.oaktree.core.patterns.sequence.IDataReceiver;
+import com.oaktree.core.data.sequence.IDataReceiver;
 import com.oaktree.core.utils.Text;
 
 /**
  * Created by ianjames on 08/05/2014.
  */
-public class UnsubscribeRequest<T> implements ISubscriptionRequest<T> {
+public class SubscriptionRequest<T> implements ISubscriptionRequest<T> {
 
     private IDataReceiver<T> recevier;
     private String key;
-    private SubscriptionType type;
-    public UnsubscribeRequest(String key, IDataReceiver<T> receiver, SubscriptionType type) {
+    private int type;
+    public SubscriptionRequest(String key, IDataReceiver<T> receiver,int type) {
         if (key == null) {
             throw new IllegalArgumentException("Null key");
         }
@@ -33,26 +33,26 @@ public class UnsubscribeRequest<T> implements ISubscriptionRequest<T> {
     }
 
     @Override
-    public SubscriptionType getSubscriptionType() {
+    public int getSubscriptionType() {
         return type;
     }
 
     @Override
     public String toString() {
-        return type.name() + Text.SPACE  + key + Text.SPACE + recevier.getName();
+        return SubscriptionType.toString(type) + Text.SPACE  + key + Text.SPACE + recevier.getName();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof UnsubscribeRequest)) {
+        if (!(o instanceof  SubscriptionRequest)) {
             return false;
         }
-        UnsubscribeRequest r = (UnsubscribeRequest)(o);
-        return recevier.getName().equals(r.getDataReceiver().getName()) && key.equals(r.getKey());
+        SubscriptionRequest r = (SubscriptionRequest)(o);
+        return recevier.getName().equals(r.getDataReceiver().getName()) && key.equals(r.getKey()) && r.getSubscriptionType() == type;
     }
 
     @Override
     public int hashCode() {
-        return 32 + recevier.getName().hashCode()+ key.hashCode();
+        return 32 + recevier.getName().hashCode()+ key.hashCode()+type;
     }
 }

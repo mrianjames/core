@@ -1,6 +1,6 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
 
-import com.oaktree.core.patterns.sequence.IDataProvider;
+import com.oaktree.core.data.sequence.IDataProvider;
 
 import java.util.Collection;
 

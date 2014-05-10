@@ -2,7 +2,7 @@ package com.oaktree.core.syslog.server;
 
 import java.text.ParseException;
 
-import com.oaktree.core.patterns.sequence.DataSequence;
+import com.oaktree.core.data.sequence.DataSequence;
 import com.oaktree.core.syslog.SyslogUtils;
 import com.oaktree.core.utils.Text;
 

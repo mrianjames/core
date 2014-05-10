@@ -1,4 +1,4 @@
-package com.oaktree.core.patterns.cache;
+package com.oaktree.core.data.cache;
 
 /**
  * Data that has a key we can use to store it with or lookup quickly.

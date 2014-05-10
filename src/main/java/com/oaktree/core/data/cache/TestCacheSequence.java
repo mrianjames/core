@@ -1,4 +1,4 @@
-package com.oaktree.core.patterns.cache;
+package com.oaktree.core.data.cache;
 
 
 public class TestCacheSequence {

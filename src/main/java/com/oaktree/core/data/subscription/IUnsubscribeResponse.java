@@ -1,4 +1,4 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
 
 /**
  * Created by ianjames on 06/05/2014.

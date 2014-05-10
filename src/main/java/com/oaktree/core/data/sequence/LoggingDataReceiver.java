@@ -1,9 +1,7 @@
-package com.oaktree.core.patterns.sequence;
+package com.oaktree.core.data.sequence;
 
 import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.IComponent;
-import com.oaktree.core.patterns.sequence.IDataProvider;
-import com.oaktree.core.patterns.sequence.IDataReceiver;
 
 /**
  * Simple data receiver that just logs.

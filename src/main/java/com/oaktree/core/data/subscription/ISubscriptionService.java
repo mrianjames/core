@@ -1,4 +1,4 @@
-package com.oaktree.core.patterns.subscription;
+package com.oaktree.core.data.subscription;
 
 import com.oaktree.core.container.IComponent;
 
