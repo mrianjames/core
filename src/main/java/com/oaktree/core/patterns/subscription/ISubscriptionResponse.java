@@ -8,4 +8,10 @@ public interface ISubscriptionResponse<T> {
     public T getInitialSnapshot();
 
     public String getFailureReason();
+
+    /**
+     * Shortcut way of setting failed status with reason
+     * @param reason
+     */
+    void fail(String reason);
 }

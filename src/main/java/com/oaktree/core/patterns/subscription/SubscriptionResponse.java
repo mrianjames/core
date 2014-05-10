@@ -33,6 +33,12 @@ public class SubscriptionResponse<T> implements ISubscriptionResponse<T> {
     }
 
     @Override
+    public void fail(String reason) {
+        this.failureReason = reason;
+        this.result = SubscriptionResult.SUBSCRIPTION_FAILURE;
+    }
+
+    @Override
     public String toString() {
         return result + (result.isFailure() ? " "+failureReason:"")+" initial: "+initial;
     }

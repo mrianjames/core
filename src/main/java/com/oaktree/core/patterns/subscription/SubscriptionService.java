@@ -97,12 +97,27 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
             if (logger.isInfoEnabled()) {
                 logger.info(getName() + " subscription: " + request);
             }
+            if (request.getDataReceiver() == null) {
+                response.fail("Invalid receiver - null");
+                logger.warn("Subscription failure: "+response.getFailureReason());
+                return response;
+            }
+            if (request.getDataReceiver().getName() == null) {
+                response.fail("Invalid receiver - null name");
+                logger.warn("Subscription failure: "+response.getFailureReason());
+                return response;
+            }
+            if (request.getKey() == null) {
+                response.fail("Invalid, null key requested");
+                logger.warn("Subscription failure: "+response.getFailureReason());
+                return response;
+            }
 
             if (request.getSubscriptionType().isSnap()) {
                 T snap = cache.snap(request.getKey());
                 response.setInitial(snap);
                 response.setSubscriptionResult(SubscriptionResult.SUBSCRIPTION_OK);
-                if (request.getSubscriptionType().isAsyncSnap()) {
+                if (snap != null && request.getSubscriptionType().isAsyncSnap()) {
                     request.getDataReceiver().onData(snap, this, getTime());
                 }
             }
@@ -207,6 +222,9 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
      */
     private void distributeData(final T data, final IComponent from, final long receivedTime) {
         Collection<ISubscriptionRequest<T>> matching = getMatchingRequests(data.getDataKey());
+        if (matching == null) {
+            return;
+        }
         for (final ISubscriptionRequest<T> request:matching) {
             if (dispatcher != null) {
                 if (null == conflationPendingMap.putIfAbsent(data.getDataKey(),Boolean.TRUE)) {

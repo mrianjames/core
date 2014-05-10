@@ -22,7 +22,9 @@ public class TestSubscriptionService {
     private static class MockDataObject implements IData<String> {
         private final String key;
         private final double value;
-
+        public String toString() {
+            return key + " " + value;
+        }
         public MockDataObject(String key, double value) {
             this.key = key;
             this.value = value;
