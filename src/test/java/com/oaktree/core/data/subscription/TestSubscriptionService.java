@@ -8,6 +8,9 @@ import com.oaktree.core.data.sequence.IDataReceiver;
 import com.oaktree.core.threading.dispatcher.IDispatcher;
 import com.oaktree.core.threading.dispatcher.throughput.ThroughputDispatcher;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +24,11 @@ import junit.framework.Assert;
  * Created by ianjames on 09/05/2014.
  */
 public class TestSubscriptionService {
+
+    private MockDataProvider p;
+    private ThroughputDispatcher dispatcher;
+    private SubscriptionService<MockDataObject> ss;
+    private MockReceiver receiver;
 
     private static class MockDataObject implements IData<String> {
         private final String key;
@@ -95,18 +103,29 @@ public class TestSubscriptionService {
         }
     }
 
-    public static void main(String[] args) {
+    String key = "TEST.KEY";
 
-        MockDataProvider p = new MockDataProvider();
-        IDispatcher dispatcher = new ThroughputDispatcher("D",2);
+    @Before
+    public void setup(){
+        this.p = new MockDataProvider();
+        this.dispatcher = new ThroughputDispatcher("D",2);
         dispatcher.start();
 
-        SubscriptionService<MockDataObject> ss = new SubscriptionService<MockDataObject>("ss");
+        this.ss = new SubscriptionService<MockDataObject>("ss");
         ss.addProvider(p);
 
-        String key = "TEST.KEY";
-        MockReceiver receiver = new MockReceiver();
+
+        this.receiver = new MockReceiver();
         receiver.setName("MOCKREC");
+    }
+
+    @After
+    public void tearDown() {
+        dispatcher.stop();
+    }
+
+    @Test
+    public void testSsubscribeToRequest() {
         SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC_SNAP_AND_SUBSCRIBE);
         ss.subscribe(request);
 
@@ -117,11 +136,46 @@ public class TestSubscriptionService {
         Assert.assertEquals(1,receiver.getData().size());
         MockDataObject o = receiver.getData().iterator().next();
         Assert.assertEquals(13.0,o.getValue(),0.0000000001);
-        
+    }
+
+    @Test
+    public void testSyncSnap() {
+        SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.SNAP);
+        ISubscriptionResponse<MockDataObject> response = ss.subscribe(request);
+        Assert.assertNull(response.getInitialSnapshot());
+        MockDataObject update = new MockDataObject(key,12.0);
+        p.update(update);
+        response = ss.subscribe(request);
+        Assert.assertNotNull(response.getInitialSnapshot());
+        Assert.assertEquals(response.getInitialSnapshot(),update);
+        Assert.assertEquals(0,receiver.getData().size()); //check no sub updates.
+    }
+
+
+    @Test
+    public void testUnsubscribeToRequest() {
+        SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC_SNAP_AND_SUBSCRIBE);
+        ss.subscribe(request);
+
+        p.update(new MockDataObject(key,12.0));
+        Assert.assertEquals(1,receiver.getData().size());
+        receiver.clear();
+        p.update(new MockDataObject(key,13.0));
+        Assert.assertEquals(1,receiver.getData().size());
+        MockDataObject o = receiver.getData().iterator().next();
+        Assert.assertEquals(13.0,o.getValue(),0.0000000001);
+
         //remove subscription
         receiver.clear();
         ss.unsubscribe(request);
         p.update(new MockDataObject(key,13.2));
         Assert.assertEquals(0,receiver.getData().size());
+    }
+
+    public static void main(String[] args) {
+
+       TestSubscriptionService tss = new TestSubscriptionService();
+       tss.setup();
+       tss.testUnsubscribeToRequest();
     }
 }
