@@ -4,7 +4,7 @@ package com.oaktree.core.data.subscription;
  * Created by ianjames on 06/05/2014.
  */
 public enum SubscriptionResult {
-    SUBSCRIPTION_OK,SUBSCRIPTION_FAILURE, NONE;
+    SUBSCRIPTION_OK,SUBSCRIPTION_FAILURE, SUBSCRIPTION_CLOSED,NONE;
 
     public boolean isSuccess() {
         return this.equals(SUBSCRIPTION_OK);

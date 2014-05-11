@@ -7,6 +7,8 @@ public class SubscriptionType {
     /**
      * Asynchronous snap (no subscribe)
      */
+	public static int ANYTHING = 0; //wild card.
+	//bitmasks....
     public static int ASYNC = 1;
     public static int SNAP = 2;
     public static int REALTIME_UPDATES = 4;
@@ -24,8 +26,17 @@ public class SubscriptionType {
         return isAsync(value)&&isAsync(value);
     }
 	public static String toString(int type) {
-		// TODO Auto-generated method stub
-		return null;
+		String tp = "[";
+		if (isAsync(type)) {
+			tp += ",ASYNC";
+		}
+		if (isSnap(type)) {
+			tp += ",SNAP";
+		}
+		if (isSubscribe(type)) {
+			tp += ",SUBSCRIBE";
+		}
+		return tp+"]";
 	}
-	public static int ALL = (ASYNC | SNAP | REALTIME_UPDATES);
+	public static int ASYNC_SNAP_AND_SUBSCRIBE = (ASYNC | SNAP | REALTIME_UPDATES);
 }

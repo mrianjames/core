@@ -19,5 +19,5 @@ public interface ISubscriptionService<T> extends IComponent {
      * @param request
      * @return
      */
-    public IUnsubscribeResponse<T> unsubscribe(IUnsubscribeRequest<T> request);
+    public ISubscriptionResponse<T> unsubscribe(ISubscriptionRequest<T> request);
 }

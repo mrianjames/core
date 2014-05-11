@@ -107,7 +107,8 @@ public class TestSubscriptionService {
         String key = "TEST.KEY";
         MockReceiver receiver = new MockReceiver();
         receiver.setName("MOCKREC");
-        ss.subscribe(new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC|SubscriptionType.SNAP));
+        SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC_SNAP_AND_SUBSCRIBE);
+        ss.subscribe(request);
 
         p.update(new MockDataObject(key,12.0));
         Assert.assertEquals(1,receiver.getData().size());
@@ -119,7 +120,7 @@ public class TestSubscriptionService {
         
         //remove subscription
         receiver.clear();
-        ss.unsubscribe(new UnsubscribeRequest<MockDataObject>(key, receiver, SubscriptionType.ALL));
+        ss.unsubscribe(request);
         p.update(new MockDataObject(key,13.2));
         Assert.assertEquals(0,receiver.getData().size());
     }

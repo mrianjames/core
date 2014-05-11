@@ -123,6 +123,7 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
             }
             if (SubscriptionType.isSubscribe(request.getSubscriptionType())) {
                 response.setSubscriptionResult(doSubscribe(request));
+                doSubscribe(request);
             }
         } catch (Throwable t) {
             if (logger.isErrorEnabled()) {
@@ -137,8 +138,29 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
     }
 
     @Override
-    public IUnsubscribeResponse<T> unsubscribe(IUnsubscribeRequest<T> request) {
-        return null;
+    public ISubscriptionResponse<T> unsubscribe(ISubscriptionRequest<T> request) {
+    	 SubscriptionResponse<T> response = new SubscriptionResponse<T>();
+         try {
+             if (logger.isInfoEnabled()) {
+                 logger.info(getName() + " unsubscribe: " + request);
+             }
+             if (request == null) {
+                 response.fail("Invalid request - null");
+                 logger.warn("Unsubscribe failure: "+response.getFailureReason());
+                 return response;
+             }
+             if (request.getDataReceiver() == null) {
+                 response.fail("Invalid receiver - null");
+                 logger.warn("Unsubscribe failure: "+response.getFailureReason());
+                 return response;
+             }
+             requests.remove(request.getKey(), request);
+         } catch (Throwable t) {
+        	 response.fail("Unexpected unsubscribe error: "+t.getMessage());
+             logger.warn("Unsubscribe failure: "+response.getFailureReason());
+             return response;
+         }
+        return response;
     }
 
     /**
