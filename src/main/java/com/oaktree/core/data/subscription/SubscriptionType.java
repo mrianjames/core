@@ -1,6 +1,8 @@
 package com.oaktree.core.data.subscription;
 
 /**
+ * Bit mask values to allow combination of values to be specified.
+ *
  * Created by ianjames on 06/05/2014.
  */
 public class SubscriptionType {

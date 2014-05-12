@@ -2,10 +2,9 @@ package com.oaktree.core.data.subscription;
 
 import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.IComponent;
-import com.oaktree.core.data.cache.IData;
+import com.oaktree.core.data.IData;
 import com.oaktree.core.data.sequence.IDataProvider;
 import com.oaktree.core.data.sequence.IDataReceiver;
-import com.oaktree.core.threading.dispatcher.IDispatcher;
 import com.oaktree.core.threading.dispatcher.throughput.ThroughputDispatcher;
 
 import org.junit.After;
@@ -136,6 +135,19 @@ public class TestSubscriptionService {
         Assert.assertEquals(1,receiver.getData().size());
         MockDataObject o = receiver.getData().iterator().next();
         Assert.assertEquals(13.0,o.getValue(),0.0000000001);
+    }
+
+    @Test
+    public void testConflation() {
+        ss.setConflation(true);
+        SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC_SNAP_AND_SUBSCRIBE);
+        ss.subscribe(request);
+        int tests = 100000;
+        for (int i = 0; i < tests;i++) {
+            p.update(new MockDataObject(key, 12.0));
+        }
+        Assert.assertTrue(receiver.getData().size() < tests);
+
     }
 
     @Test

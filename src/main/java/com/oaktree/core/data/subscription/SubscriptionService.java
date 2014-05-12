@@ -17,7 +17,7 @@ import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.ComponentType;
 import com.oaktree.core.container.IComponent;
 import com.oaktree.core.data.cache.DataCache;
-import com.oaktree.core.data.cache.IData;
+import com.oaktree.core.data.IData;
 import com.oaktree.core.data.cache.IDataCache;
 import com.oaktree.core.data.sequence.IDataProvider;
 import com.oaktree.core.data.sequence.IDataReceiver;

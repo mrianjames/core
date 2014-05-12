@@ -1,6 +1,8 @@
 package com.oaktree.core.data.subscription;
 
 /**
+ * Result of a subscription attempt.
+ *
  * Created by ianjames on 06/05/2014.
  */
 public enum SubscriptionResult {
