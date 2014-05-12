@@ -33,4 +33,8 @@ public class DispatchSequence<I,O> extends DataSequence<I,O> implements	IDataSeq
 		}
 	}
 
+    @Override
+    public String toString() {
+    	return "DispatcherSequence["+getName()+"]";
+    }
 }
