@@ -91,7 +91,7 @@ public class TestSubscriptionService {
         List<MockDataObject> datas = new ArrayList<MockDataObject>();
         @Override
         public void onData(MockDataObject data, IComponent from, long receivedTime) {
-            logger.info("INCOMING:"+data.toString());
+            //logger.info("INCOMING:"+data.toString());
             datas.add(data);
         }
         public Collection<MockDataObject> getData() {

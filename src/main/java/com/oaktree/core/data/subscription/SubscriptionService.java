@@ -267,6 +267,9 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
                         }
                     });
                 } //we found one for this key.
+                else {
+                    logger.warn("conflating...");
+                }
             } else {
                 //on thread that provider gave us data on...
                 request.getDataReceiver().onData(data,this,getTime());
