@@ -5,7 +5,7 @@ import com.oaktree.core.data.IData;
 import com.oaktree.core.data.cache.DataCache;
 import com.oaktree.core.data.cache.IDataCache;
 
-public class TestCacheSequence {
+public class TestDataCache {
 
 	private static class TestData implements IData<String> {
 		private long data;

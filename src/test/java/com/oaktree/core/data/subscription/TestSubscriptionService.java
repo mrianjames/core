@@ -3,8 +3,8 @@ package com.oaktree.core.data.subscription;
 import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.IComponent;
 import com.oaktree.core.data.IData;
-import com.oaktree.core.data.sequence.IDataProvider;
-import com.oaktree.core.data.sequence.IDataReceiver;
+import com.oaktree.core.data.IDataProvider;
+import com.oaktree.core.data.IDataReceiver;
 import com.oaktree.core.threading.dispatcher.throughput.ThroughputDispatcher;
 
 import org.junit.After;
@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.LockSupport;
 
 import junit.framework.Assert;
 
@@ -92,6 +93,7 @@ public class TestSubscriptionService {
         @Override
         public void onData(MockDataObject data, IComponent from, long receivedTime) {
             //logger.info("INCOMING:"+data.toString());
+            //LockSupport.parkNanos(1000); //100us
             datas.add(data);
         }
         public Collection<MockDataObject> getData() {
@@ -111,6 +113,7 @@ public class TestSubscriptionService {
         dispatcher.start();
 
         this.ss = new SubscriptionService<MockDataObject>("ss");
+        this.ss.setDispatcher(dispatcher);
         ss.addProvider(p);
 
 
@@ -129,9 +132,11 @@ public class TestSubscriptionService {
         ss.subscribe(request);
 
         p.update(new MockDataObject(key,12.0));
+        LockSupport.parkNanos(100000);
         Assert.assertEquals(1,receiver.getData().size());
         receiver.clear();
         p.update(new MockDataObject(key,13.0));
+        LockSupport.parkNanos(100000);
         Assert.assertEquals(1,receiver.getData().size());
         MockDataObject o = receiver.getData().iterator().next();
         Assert.assertEquals(13.0,o.getValue(),0.0000000001);
@@ -142,12 +147,13 @@ public class TestSubscriptionService {
         ss.setConflation(true);
         SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC_SNAP_AND_SUBSCRIBE);
         ss.subscribe(request);
-        int tests = 100000;
+        int tests = 1000;
         for (int i = 0; i < tests;i++) {
             p.update(new MockDataObject(key, 12.0));
+            //LockSupport.parkNanos(100);
         }
         Assert.assertTrue(receiver.getData().size() < tests);
-
+        System.out.println("Got "+receiver.getData().size() + " from " + tests);
     }
 
     @Test
@@ -170,9 +176,11 @@ public class TestSubscriptionService {
         ss.subscribe(request);
 
         p.update(new MockDataObject(key,12.0));
+        LockSupport.parkNanos(100000);
         Assert.assertEquals(1,receiver.getData().size());
         receiver.clear();
         p.update(new MockDataObject(key,13.0));
+        LockSupport.parkNanos(100000);
         Assert.assertEquals(1,receiver.getData().size());
         MockDataObject o = receiver.getData().iterator().next();
         Assert.assertEquals(13.0,o.getValue(),0.0000000001);

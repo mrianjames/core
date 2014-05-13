@@ -19,8 +19,8 @@ import com.oaktree.core.container.IComponent;
 import com.oaktree.core.data.cache.DataCache;
 import com.oaktree.core.data.IData;
 import com.oaktree.core.data.cache.IDataCache;
-import com.oaktree.core.data.sequence.IDataProvider;
-import com.oaktree.core.data.sequence.IDataReceiver;
+import com.oaktree.core.data.IDataProvider;
+import com.oaktree.core.data.IDataReceiver;
 import com.oaktree.core.threading.dispatcher.IDispatcher;
 import com.oaktree.core.time.ITime;
 import com.oaktree.core.time.JavaTime;
@@ -249,32 +249,38 @@ public class SubscriptionService<T extends IData<String>> extends AbstractCompon
         }
         for (final ISubscriptionRequest<T> request:matching) {
             if (dispatcher != null) {
-                if (null == conflationPendingMap.putIfAbsent(data.getDataKey(),Boolean.TRUE)) {
-                    dispatcher.dispatch(request.getDataReceiver().getName(), new Runnable() {
-                        public void run() {
-                            try {
-                                if (conflation) {
-                                    T latest = cache.snap(data.getDataKey());
-                                    conflationPendingMap.remove(conflationPendingMap);
-                                    request.getDataReceiver().onData(latest, SubscriptionService.this, receivedTime);
-                                } else {
-                                    //skip the cache get, adds nothing.
-                                    request.getDataReceiver().onData(data, SubscriptionService.this, receivedTime);
-                                }
-                            } catch (Exception e) {
-                                logger.error("Error distributing data", e);
-                            }
-                        }
-                    });
-                } //we found one for this key.
-                else {
-                    logger.warn("conflating...");
+                if (conflation) {
+                    if (null == conflationPendingMap.putIfAbsent(data.getDataKey(), Boolean.TRUE)) {
+                        dispatch(request, data, receivedTime);
+                    } //we found one for this key.
+                } else {
+                    dispatch(request,data,receivedTime);
                 }
+
             } else {
                 //on thread that provider gave us data on...
                 request.getDataReceiver().onData(data,this,getTime());
             }
         }
+    }
+
+    private void dispatch(final ISubscriptionRequest request, final T data,final long receivedTime) {
+        dispatcher.dispatch(request.getDataReceiver().getName(), new Runnable() {
+            public void run() {
+                try {
+                    if (conflation) {
+                        T latest = cache.snap(data.getDataKey());
+                        conflationPendingMap.remove(data.getDataKey());
+                        request.getDataReceiver().onData(latest, SubscriptionService.this, receivedTime);
+                    } else {
+                        //skip the cache get, adds nothing.
+                        request.getDataReceiver().onData(data, SubscriptionService.this, receivedTime);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error distributing data", e);
+                }
+            }
+        });
     }
 
     /**

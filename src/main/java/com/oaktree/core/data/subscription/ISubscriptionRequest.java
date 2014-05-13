@@ -1,6 +1,6 @@
 package com.oaktree.core.data.subscription;
 
-import com.oaktree.core.data.sequence.IDataReceiver;
+import com.oaktree.core.data.IDataReceiver;
 
 /**
  * A request for a subscription

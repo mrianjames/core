@@ -1,6 +1,8 @@
 package com.oaktree.core.data.sequence;
 
 import com.oaktree.core.container.IComponent;
+import com.oaktree.core.data.IDataProvider;
+import com.oaktree.core.data.IDataReceiver;
 
 /**
  * A component that takes data and passes on, after presumably some

@@ -3,12 +3,12 @@
  */
 package com.oaktree.core.data.sequence;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import com.oaktree.core.container.IComponent;
+import com.oaktree.core.data.IDataReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,7 @@
 package com.oaktree.core.data.sequence;
 
 import com.oaktree.core.container.IComponent;
+import com.oaktree.core.data.IDataReceiver;
 import com.oaktree.core.threading.dispatcher.IDispatcher;
 
 /**

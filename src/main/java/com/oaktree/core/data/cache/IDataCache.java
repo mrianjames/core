@@ -1,7 +1,7 @@
 package com.oaktree.core.data.cache;
 
 import com.oaktree.core.container.IComponent;
-import com.oaktree.core.data.sequence.IDataReceiver;
+import com.oaktree.core.data.IDataReceiver;
 
 /**
  * A cache of data.

@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.oaktree.core.container.ComponentState;
 import com.oaktree.core.container.IComponent;
 import com.oaktree.core.data.sequence.DataSequence;
-import com.oaktree.core.data.sequence.IDataReceiver;
+import com.oaktree.core.data.IDataReceiver;
 import com.oaktree.core.syslog.server.ISysLogRecord;
 import com.oaktree.core.utils.Text;
 
