@@ -37,7 +37,13 @@ public class CounterSequence<I extends IData<T>,O extends IData<T>,T> extends Da
         super.process(data,from,receivedTime);
         AtomicLong ai = countMap.get(data.getDataKey());
         if (ai == null) {
-            ai = countMap.putIfAbsent(data.getDataKey(),new AtomicLong(0));
+            synchronized (data.getDataKey()) {
+                AtomicLong al = new AtomicLong(0);
+                AtomicLong existing = countMap.putIfAbsent(data.getDataKey(), al);
+                if (existing != null) {
+                    ai = al;
+                }
+            }
         }
         ai.getAndIncrement();
         return (O)data;
