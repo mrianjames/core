@@ -132,14 +132,17 @@ public final class ResultTimer {
 
 	/**
 	 * End the sample timing
+     * @return duration of sample.
 	 */
-	public void endSample() {
+	public long endSample() {
 		sampleEnd = time.getNanoTime();
+        long dur = sampleEnd - sampleStart;
 		if (ignoreCount >= ignoreFirst) {
-			stats.addValue(sampleEnd - sampleStart);
+			stats.addValue(dur);
 		} else {
 			ignoreCount++;
 		}
+        return dur;
 	}
 
 	/**
