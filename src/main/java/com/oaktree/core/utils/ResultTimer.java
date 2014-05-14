@@ -122,7 +122,7 @@ public final class ResultTimer {
 	 * Commence the sample timing
 	 */
 	public void startSample() {
-		long t = time.getNanoTime();
+		long t = time.getNanoStamp();
 		if (firstStart == 0) {
 			firstStart = t;
 		}
@@ -135,7 +135,7 @@ public final class ResultTimer {
      * @return duration of sample.
 	 */
 	public long endSample() {
-		sampleEnd = time.getNanoTime();
+		sampleEnd = time.getNanoStamp();
         long dur = sampleEnd - sampleStart;
 		if (ignoreCount >= ignoreFirst) {
 			stats.addValue(dur);

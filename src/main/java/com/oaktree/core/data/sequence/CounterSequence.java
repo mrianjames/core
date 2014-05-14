@@ -41,6 +41,8 @@ public class CounterSequence<I extends IData<T>,O extends IData<T>,T> extends Da
                 AtomicLong al = new AtomicLong(0);
                 AtomicLong existing = countMap.putIfAbsent(data.getDataKey(), al);
                 if (existing != null) {
+                    ai = existing;
+                } else {
                     ai = al;
                 }
             }
@@ -69,6 +71,11 @@ public class CounterSequence<I extends IData<T>,O extends IData<T>,T> extends Da
     public Collection<T> getKeys() {
         ArrayList<T> list = new ArrayList<T>(countMap.keySet());
         return list;
+    }
+
+    @Override
+    public String toString() {
+        return "CounterSequence["+getName()+"]";
     }
 
 //    public static void main(String[] args)

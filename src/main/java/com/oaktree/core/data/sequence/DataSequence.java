@@ -144,9 +144,11 @@ public class DataSequence<I,O> extends AbstractComponent implements IDataSequenc
 	public void onData(I data, IComponent from, long receivedTime) {
 		//do what you need with the data...then distribute the result.
 		O updated = process(data,from,receivedTime);
-		for (IDataReceiver<O> sink: receivers) {
-			sink.onData(updated, this, receivedTime);
-		}
+        if (updated != null) {
+            for (IDataReceiver<O> sink : receivers) {
+                sink.onData(updated, this, receivedTime);
+            }
+        }
 	}
 
 	/**
@@ -165,9 +167,16 @@ public class DataSequence<I,O> extends AbstractComponent implements IDataSequenc
 		}
 		return (O)data;
 	}
-	
+
+    /**
+     * One method initialise and start.
+     */
+    public void boot() {
+        this.initialise();
+        this.start();
+    }
 	/**
-	 * Helpful print. 
+	 * Helpful print.
 	 * @param data
 	 * @param from
 	 * @param receivedTime
@@ -182,5 +191,6 @@ public class DataSequence<I,O> extends AbstractComponent implements IDataSequenc
 			logger.info("onData["+from+"]: "+ data +" @ "+receivedTime);
 		}
 	}
-	
+
+
 }

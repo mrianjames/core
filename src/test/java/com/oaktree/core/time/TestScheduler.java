@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.springframework.format.annotation.DateTimeFormat;
 
 public class TestScheduler {
 
@@ -48,6 +49,53 @@ public class TestScheduler {
         Assert.assertEquals(now-midnight,time,10); //rough time
 //        System.out.println("Now:" + Text.renderTime(now).substring(0,10) + ", time: " + Text.toTime(time).substring(0,10));
 //        Assert.assertEquals(Text.renderTime(now).substring(0,10),Text.toTime(time).substring(0,10));
+    }
+
+    @Test
+    public void testScheduleUntilReps() {
+        MultiTimeScheduler scheduler = new MultiTimeScheduler();
+        scheduler.initialise();
+        scheduler.start();
+        scheduler.setHypertime(1);
+        final CountDownLatch latch = new CountDownLatch(3);
+        final List<Long> run = new ArrayList<Long>();
+        Runnable task = new Runnable() {
+
+            @Override
+            public void run() {
+                long t = System.currentTimeMillis();
+                System.out.println("Executed: " + Text.renderTime(t));
+                run.add(t);
+                //latch.countDown();
+            }
+        };
+        scheduler.scheduleUntilReps("A",1000,100,3,task);
+        try {Thread.sleep(3000);} catch (Exception e) {}
+        Assert.assertEquals(3,run.size());
+    }
+
+    @Test
+    public void testScheduleUntilTime() {
+        MultiTimeScheduler scheduler = new MultiTimeScheduler();
+        scheduler.initialise();
+        scheduler.start();
+        scheduler.setHypertime(1);
+        final CountDownLatch latch = new CountDownLatch(3);
+        final List<Long> run = new ArrayList<Long>();
+        Runnable task = new Runnable() {
+
+            @Override
+            public void run() {
+                long t = System.currentTimeMillis();
+                System.out.println("Executed: " + Text.renderTime(t));
+                run.add(t);
+                //latch.countDown();
+            }
+        };
+        long now = System.currentTimeMillis();
+        scheduler.scheduleUntilTime("A",100,100,2000,task);
+        try {Thread.sleep(3000);} catch (Exception e) {}
+        Assert.assertEquals(19,run.size());
     }
 
     @Test

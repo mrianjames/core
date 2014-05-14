@@ -30,7 +30,39 @@ public interface ITimeScheduler extends IComponent {
 	public Future<?> schedule(String key,long interval,Runnable task);
 	public Future<?> schedule(String key,Date date, Runnable task);
 	public Future<?> schedule(String key,Date date, long thenevery, Runnable task);
-	public Future<?> schedule(String key,long initial, long every, Runnable task);
+
+    /**
+     * Schedule task in "initial" ms and then every "every" ms thereafter.
+     *
+     * @param key
+     * @param initial
+     * @param every
+     * @param task
+     * @return
+     */
+    public Future<?> schedule(String key,long initial, long every, Runnable task);
+
+    /**
+     * Schedule a task in initial, and keep running it every "every" until we hit the
+     * maxRepitions at which point we terminate the scheduling.
+     *
+     * @param key
+     * @param initial
+     * @param every
+     * @param maxRepetitions
+     * @return
+     */
+    public Future<?> scheduleUntilReps(String key, long initial, long every, long maxRepetitions, Runnable task);
+
+    /**
+     * Schedule a task, repeating the iteration until a specified time.
+     * @param key
+     * @param initial
+     * @param every
+     * @param time
+     * @return
+     */
+    public Future<?> scheduleUntilTime(String key, long initial, long every, long time, Runnable task);
 
     /**
      * Set the hyper-time multiplier that time in non-click mode runs.

@@ -17,15 +17,21 @@ public class TestText {
     public void testTimeFormatting() {
         int tests = 50000;
         long time = System.currentTimeMillis()+(1*Text.MILLIS_PER_HOUR);
-        ResultTimer timer = new ResultTimer(10000);
+        ResultTimer timera = new ResultTimer(10000);
+        ResultTimer timerb = new ResultTimer(10000);
         for (int i  = 0; i < tests;i++) {
-            timer.startSample();
+            timera.startSample();
             String x = Text.toTimeSinceEpoch(time);
-            timer.endSample();
-            System.out.println(x);
+            long da = timera.endSample();
+            System.out.println(x+ " dura: "+da+"ns");
+            timerb.startSample();
+            String y = Text.renderTime(time); //thread local date formatter.
+            long db = timerb.endSample();
+            System.out.println(y + " durb: "+db+"ns");
 
         }
-        System.out.println(timer.toString(TimeUnit.NANOSECONDS));
+        System.out.println(timera.toString(TimeUnit.NANOSECONDS));
+        System.out.println(timerb.toString(TimeUnit.NANOSECONDS));
     }
 
 

@@ -59,7 +59,7 @@ public class Text {
 	/**
 	 * Is a string null or empty?
 	 * 
-	 * @param engineName
+	 * @param value
 	 * @return true if value is null or 0 length.
 	 */
 	public static boolean isBlank(String value) {
@@ -69,7 +69,7 @@ public class Text {
 	/**
 	 * Has a string a value?
 	 * 
-	 * @param name
+	 * @param value
 	 * @return true if value is not null or 0 length.
 	 */
 	public static boolean isNotBlank(String value) {
@@ -222,7 +222,7 @@ public class Text {
 	 */
 	private static ThreadLocal<DateFormat> tfLocal = new ThreadLocal<DateFormat>() {
 		protected DateFormat initialValue() {
-			return new SimpleDateFormat("HH:mm:ss.SS");
+			return new SimpleDateFormat("HH:mm:ss.SSS");
 		}
 	};
 
@@ -274,7 +274,7 @@ public class Text {
 	/**
 	 * Render a nice time using threadsafe formatter.
 	 * 
-	 * @param start
+	 * @param time
 	 * @return string represntation of a time
 	 */
 	public static String renderTime(long time) {
@@ -283,7 +283,7 @@ public class Text {
 	}
 	/**
 	 * Render datetime long value to a String.
-	 * @param start
+	 * @param datetime
 	 * @return string representation inc. date of time
 	 */
     public static String renderDateTime(long datetime) {

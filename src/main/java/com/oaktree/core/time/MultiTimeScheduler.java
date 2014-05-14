@@ -187,7 +187,44 @@ public class MultiTimeScheduler extends AbstractComponent implements ITimeSchedu
 		return v;
 	}
 
-	@Override
+    /**
+     * Appointment that will terminate another appointment.
+     */
+    private class AppointmentReviewTask implements Runnable {
+        private final ScheduledTask apptmt;
+
+        AppointmentReviewTask(ScheduledTask apptmt) {
+            this.apptmt = apptmt;
+        }
+        public void run(){
+            if (apptmt != null) {
+                logger.info("Terminating appointment " + apptmt.getFuture().toString());
+                apptmt.cancel();
+            }
+        }
+    }
+
+    @Override
+    public Future<?> scheduleUntilReps(String key, long initial, long every, long maxRepetitions, Runnable task) {
+        ScheduledTask wrapper = new ScheduledTask(key,task,this, this.hypertime);
+        ScheduledFuture<?> v = this.timer.scheduleWithFixedDelay(wrapper, this.getRealtime(initial),this.getRealtime(every), this.timeUnit);
+        wrapper.setFuture(v);
+        AppointmentReviewTask cancelTask = new AppointmentReviewTask(wrapper);
+        timer.schedule(cancelTask,getRealtime(initial+(maxRepetitions*every)),this.timeUnit);
+        return v;
+    }
+
+    @Override
+    public Future<?> scheduleUntilTime(String key, long initial, long every, long duration, Runnable task) {
+        ScheduledTask wrapper = new ScheduledTask(key,task,this, this.hypertime);
+        ScheduledFuture<?> v = this.timer.scheduleWithFixedDelay(wrapper, this.getRealtime(initial),this.getRealtime(every), this.timeUnit);
+        wrapper.setFuture(v);
+        AppointmentReviewTask cancelTask = new AppointmentReviewTask(wrapper);
+        timer.schedule(cancelTask,getRealtime(duration),this.timeUnit);
+        return v;
+    }
+
+    @Override
 	public void setHypertime(double multiplier) {
 		if (multiplier == 0) {
 			throw new IllegalArgumentException("Invalid multiplier: 0");
