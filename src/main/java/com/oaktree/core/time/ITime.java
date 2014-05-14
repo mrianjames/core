@@ -26,10 +26,18 @@ public interface ITime {
     public TimeUnit getTimeOfDayResolution();
 
     /**
-     * Get the fine grained "time" for measurement
+     * Get the fine grained "time" for measurement. This is a real comparable time of as high precision
+     * as is available.
      * @return time in nanos.
      */
     public long getNanoTime();
+
+    /**
+     * This is a high precision stamp. Probably not representing clock time, but an arbitary time like
+     * java nanosecond call.
+     * @return
+     */
+    public long getNanoStamp();
 
     /**
      * Get the time in micros. Will depend on implementation as to if this value is comparable

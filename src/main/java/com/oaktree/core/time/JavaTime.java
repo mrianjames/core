@@ -26,6 +26,11 @@ public class JavaTime implements ITime {
     }
 
     @Override
+    public long getNanoStamp() {
+        return System.nanoTime();
+    }
+
+    @Override
     public long getMicroTime() {
         return getNanoTime()/1000;
     }
