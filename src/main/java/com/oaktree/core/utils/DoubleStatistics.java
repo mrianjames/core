@@ -248,6 +248,8 @@ public class DoubleStatistics implements IStatistics {
     @Override
     public void clear() {
         pos.set(0);
+        min=Double.NaN;
+        max=Double.NaN;
     }
 
     /**
