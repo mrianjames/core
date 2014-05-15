@@ -94,7 +94,8 @@ public class RateSequence<I extends IData<T>,O extends DataRate,T> extends DataS
             }
         }
         ai.getAndIncrement();
-        return (O)data;
+        //return (O)data;
+        return null;
     }
 
     /**

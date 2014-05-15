@@ -9,24 +9,24 @@ import java.util.Collection;
 /**
  * Created by ianjames on 15/05/2014.
  *
- * Filters out data that has a key that is in the supplied list.
+ * Filters out data that is in the supplied list.
  *
  * I is input type and output type - for this sequence they are the same thing.
  * T is the type of the key that I Data object has.
  */
-public class BlackDataFilterSequence<I extends IData<T>,T> extends DataSequence<I,I> {
+public class BlackDataFilterSequence<I extends IData<?>> extends DataSequence<I,I> {
 
     /**
      * Keys to include.
      */
-    private final Collection<T> blackList;
+    private final Collection<I> blackList;
 
     /**
      *
      * @param name
      * @param list - black-list of data of key type T
      */
-    public BlackDataFilterSequence(String name, Collection<T> list) {
+    public BlackDataFilterSequence(String name, Collection<I> list) {
         super(name);
         if (list == null) {
             list = new ArrayList<>();

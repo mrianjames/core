@@ -13,19 +13,19 @@ import java.util.Collection;
  * I is input type and output type - for this sequence they are the same thing.
  * T is the type of the key that I Data object has.
  */
-public class WhiteDataFilterSequence<I extends IData<T>,T> extends DataSequence<I,I> {
+public class WhiteDataFilterSequence<I extends IData<?>> extends DataSequence<I,I> {
 
     /**
      * Keys to include.
      */
-    private final Collection<T> whiteList;
+    private final Collection<I> whiteList;
 
     /**
      *
      * @param name
      * @param list - white-list of datas that are allowed.
      */
-    public WhiteDataFilterSequence(String name, Collection<T> list) {
+    public WhiteDataFilterSequence(String name, Collection<I> list) {
         super(name);
         if (list == null) {
             list = new ArrayList<>();

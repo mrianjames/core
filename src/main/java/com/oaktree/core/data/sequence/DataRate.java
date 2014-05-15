@@ -2,6 +2,7 @@ package com.oaktree.core.data.sequence;
 
 import com.oaktree.core.data.IData;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -16,6 +17,9 @@ public class DataRate<T> implements IData<T> {
     private double rate;
     private Collection<DataRate<T>> children;
     public void addChild(DataRate<T> child) {
+        if (children == null) {
+            children = new ArrayList<>();
+        }
         children.add(child);
     }
     public Collection<DataRate<T>> getChildren() {
