@@ -5,22 +5,20 @@ import com.oaktree.core.data.IData;
 import com.oaktree.core.data.IDataReceiver;
 import com.oaktree.core.time.ITimeScheduler;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  * Sequence that tracks overall (all key) incoming rates.
+ * The output type is a DataRate object.
+ * This sequence will not passthrough what came in.
  *
  * Created by ianjames on 14/05/2014.
  */
 public class CompositeRateSequence<I extends IData<T>,O extends DataRate,T> extends DataSequence<I,DataRate> implements Runnable {
     private final ITimeScheduler scheduler;
     private final long bucket;
-    //private final TimeUnit timeUnit;
     private final long duration;
     private final boolean logRate;
     private final boolean notify;
@@ -29,19 +27,26 @@ public class CompositeRateSequence<I extends IData<T>,O extends DataRate,T> exte
     private AtomicLong counter = new AtomicLong(0);
 
 
+    /**
+     *
+     * @param name
+     * @param scheduler
+     * @param bucketDuration - number of ms between counting periods. normally per second (1000) or per minute (60000)
+     * @param log - log the rate when counting?
+     * @param notify - notify listener(s) when counting?
+     */
     public CompositeRateSequence(String name, ITimeScheduler scheduler, long bucketDuration, boolean log, boolean notify) {
         super(name);
         this.scheduler = scheduler;
         this.bucket = bucketDuration;
-        //this.timeUnit = tu;
-        this.duration = bucket;//TODO
+        this.duration = bucket;
         this.logRate = log;
         this.notify = notify;
     }
 
     @Override
     public String toString() {
-        return "RateSequence["+getName()+"] " + bucket +"ms";
+        return "CompositeRateSequence["+getName()+"] " + bucket +"ms";
     }
 
     @Override
