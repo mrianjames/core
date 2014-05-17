@@ -673,6 +673,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			if (path == null || path.length() == 0) {
 				path = "index.html";
 			}
+			if (File.separator.equals("\\") && path.contains("/")) {
+				//windows but web url requested. convert url.
+				path = path.replace("/",File.separator);
+			}
 			Resource resource = resources.get(path);
 			if (resource == null) {
 				//try again...
