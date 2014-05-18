@@ -3,35 +3,84 @@ ${import=OaktreeHeader.html}
         <div id="page-wrapper">
         	<div class="row"/>
         	<br/>
-        	${table_binding=(Heap)[Time,Init,Committed,Used,Max][memory.getSnapshots(Heap):time,init,committed,used,max]}
-            ${table_binding=(NonHeap)[Time,Init,Committed,Used,Max][memory.getSnapshots(NonHeap):time,init,committed,used,max]}
-            ${table_binding=(EdenSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Eden Space):time,init,committed,used,max]}
-            ${table_binding=(TenuredGen)[Time,Init,Committed,Used,Max][memory.getSnapshots(Tenured Gen):time,init,committed,used,max]}
-            ${table_binding=(SurvivorSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Survivor Space):time,init,committed,used,max]}
-            ${table_binding=(CodeCache)[Time,Init,Committed,Used,Max][memory.getSnapshots(Code Cache):time,init,committed,used,max]}
+            <div class="panel-heading">
+                JVM Memory
+            </div>
+            <!-- .panel-heading -->
+            <div class="panel-body">
+                <div class="panel-group" id="accordion">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Heap</a>
+                            </h4>
+                        </div>
+                        <div id="collapseOne" class="panel-collapse collapse in">
+                            <div class="panel-body">
+                                <div class="panel-body">
+                                    <ul class="nav nav-tabs">
+                                        <li class="active"><a href="#heapchart" data-toggle="tab">Heap Chart</a></li>
+                                        <li><a href="#heapdata" data-toggle="tab">Heap Data</a></li>
+                                    </ul>
+
+                                    <!-- Tab panes -->
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade in active" id="heapchart">
+                                            <div class="panel-body">
+                                                ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="heapdata">
+                                            <div class="panel-body">
+                                                ${data-view type="paginated_table" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Heap</a>
+                            </h4>
+                        </div>
+                        <div id="collapseTwo" class="panel-collapse collapse in">
+                            <div class="panel-body">
+                                <div class="panel-body">
+                                    <ul class="nav nav-tabs">
+                                        <li class="active"><a href="#nonheapchart" data-toggle="tab">Heap Chart</a></li>
+                                        <li><a href="#nonheapdata" data-toggle="tab">Non Heap Data</a></li>
+                                    </ul>
+
+                                    <!-- Tab panes -->
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade in active" id="nonheapchart">
+                                            <div class="panel-body">
+                                                ${data-view type="line_chart" options="" title="Non Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="nonheapdata">
+                                            <div class="panel-body">
+                                                ${data-view type="paginated_table" options="" title="Non Heap" source="memory.getSnapshots('NonHeap')" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <!-- /#page-wrapper -->
         <!-- Page-Level Demo Scripts - Tables - Use for reference -->
-       
+
+${stable_binding=(Heap)[Time,Init,Committed,Used,Max][memory.getSnapshots(Heap):time,init,committed,used,max]}
+${stable_binding=(NonHeap)[Time,Init,Committed,Used,Max][memory.getSnapshots(NonHeap):time,init,committed,used,max]}
+${stable_binding=(EdenSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Eden Space):time,init,committed,used,max]}
+${stable_binding=(TenuredGen)[Time,Init,Committed,Used,Max][memory.getSnapshots(Tenured Gen):time,init,committed,used,max]}
+${stable_binding=(SurvivorSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Survivor Space):time,init,committed,used,max]}
+${stable_binding=(CodeCache)[Time,Init,Committed,Used,Max][memory.getSnapshots(Code Cache):time,init,committed,used,max]}
     
 ${import=OaktreeTail.html}
-<script>
-    $(document).ready(function() {
-        $('#table_Heap').dataTable();
-    });
-    $(document).ready(function() {
-        $('#table_NonHeap').dataTable();
-    });
-    $(document).ready(function() {
-        $('#table_EdenSpace').dataTable();
-    });
-    $(document).ready(function() {
-        $('#table_TenuredGen').dataTable();
-    });
-    $(document).ready(function() {
-        $('#table_SurvivorSpace').dataTable();
-    });
-    $(document).ready(function() {
-        $('#table_CodeCache').dataTable();
-    });
-</script>

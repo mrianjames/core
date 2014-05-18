@@ -63,17 +63,41 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	private final static String EOT = "application/vnd.ms-fontobject";
 	private final static String ENV = "env";
 	private final static String TABLE_BINDING = "table_binding";
+    private final static String DATA_VIEW = "data-view";
 	private final static String SYS = "sys";
 	private final static String PARAM = "param";
 	private final static String JMX_MBEANS = "jmx";
 	private final static String JAVA = "java";
 	private final static String IMPORT = "import=";
-	
+
+    private static String lineChartCodeTemplate="<div id=\"${chart_id}\" style=\"width:600px;height:300px\"></div>\n" +
+            "\n" +
+            "                                        <script type=\"text/javascript\">\n" +
+            "                                        $(function() {\n" +
+            "                                            var d1 = [${chart_data}];\n" +
+            "                                            $.plot(\"#${chart_id}\", [ d1] );\n" +
+            "                                        });</script>";
+
+    private static String dataViewLineChart = "line_chart";
+    private static String dataViewPaginatedTable = "paginated_table";
+
+
+    public String makeLineChartCode(String chartId, String[] values) {
+        StringBuilder b = new StringBuilder("");
+        for (String value:values) {
+            b.append(value);
+            b.append(",");
+        }
+        String code = lineChartCodeTemplate.replaceAll("\\$\\{chart_id\\}",chartId);
+        code = code.replaceAll("\\$\\{chart_data\\}",b.toString());
+        return code;
+
+    }
 	public ProcessHttpServer(int port) {
 		this.port = port;
 		mbs = ManagementFactory.getPlatformMBeanServer();
 	}
-	
+
 	private static enum ResourceChunkType {
 		VARIABLE,CODE,PLAIN,BINARY,IMPORT;
 	}
@@ -110,7 +134,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			return chunkType.name() + " "+ (isBinary() ? (bytes.length + " bytes.") : isVariable() ? string : (string.length() + " chars"));
 		}
 	}
-	
+
 	private static class Resource {
 		private String path;
 		private File file;
@@ -125,7 +149,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			return path;
 		}
 
-		
+
 		public File getFile() {
 			return file;
 		}
@@ -140,11 +164,11 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			this.type = type;
 		}
 
-		
+
 		/**
 		 * Go through the text file and work out any mappings we need to assess
 		 * against services or variables we need to replace.
-		 * @param string 
+		 * @param string
 		 */
 		private void parseResource(String string) {
 			String key_start = "${";
@@ -163,7 +187,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					if (lastIndex == 0) {
 						//first chunk...
 						start = 0;
-					} 
+					}
 					ResourceChunk chunk = new ResourceChunk(ResourceChunkType.PLAIN,string.substring(start,foundAt));
 					chunks.add(chunk);
 				}
@@ -182,10 +206,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					chunks.add(chunk);
 				}
 				foundAt = string.indexOf(key_start, end+1);
-				
+
 			}
 			chunks.add( new ResourceChunk(ResourceChunkType.PLAIN,string.substring(lastIndex+1,string.length()-1)));
-			
+
 			int i = 0;
 			for (ResourceChunk chunk:chunks) {
 				logger.info("Chunk "+i+": " + chunk.toString());
@@ -193,7 +217,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			}
 			//TODO other syntaxes?
 		}
-		
+
 		public void load() {
 			try {
 				chunks.clear();
@@ -210,7 +234,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					}
 					br.close();
 					parseResource(b.toString()); //TODO this needs to chunk it up
-					
+
 					logger.info("Loaded resource of " + chunks.size() + " chunks");
 
 				} else {
@@ -231,8 +255,8 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			}
 		}
 
-		
-		
+
+
 
 		private Map<String, String> services = new HashMap<String, String>();
 
@@ -247,7 +271,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			return false;
 		}
 
-		
+
 
 		public boolean hasReplacements() {
 			for (ResourceChunk chunk:chunks) {
@@ -259,7 +283,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					return true;
 				}
 				//check each imported
-				
+
 			}
 			return false;
 		}
@@ -268,7 +292,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			return chunks;
 		}
 
-		
+
 	}
 
 	/**
@@ -293,7 +317,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	 * If its text it may have replacements - if it does not then return binary data.
 	 * If replacements and text then we will have to go through the chunks, evaluate the values for
 	 * the replacement parts and glue together into the final string, of which we return the binary data for.
-	 * @param values
+	 * @param params
 	 * @return
 	 */
 	public byte[] getData(Resource resource,Map<String, String> params) throws Exception {
@@ -311,7 +335,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 				//lets go and get another resource and inject its content input here.
 				Resource imp = resources.get(chunkTextToImport(chunk.getString()));
 				if (imp != null) {
-					
+
 					builder.append(new String(getData(imp,params)));
 				} else {
 					logger.warn("Cannot find import "+chunkTextToImport(chunk.getString()));
@@ -323,7 +347,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		}
 		return builder.toString().getBytes();
 	}
-	
+
 	private String processVariableReplacement(ResourceChunk chunk,Map<String,String> params) throws Exception {
 		String repl = chunk.getString();
 			String value = getValue(repl,params);
@@ -348,10 +372,15 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			if (m != null) {
 				value = String.valueOf(m.invoke(null));
 			}
-			
+
 		}else if (repl.startsWith(SYS)) {
 			value = System.getProperty(chunkTextToVariableName(repl));
-		} else if (repl.startsWith(TABLE_BINDING)) {
+		} else if (repl.startsWith(DATA_VIEW)) {
+            value = this.processDataViewRequest(repl,params);
+        }
+
+
+        else if (repl.startsWith(TABLE_BINDING)) {
 			//${binding=(Env Variables)[Var,Value][env.all]}
 			String[] columns = chunkTextToBindingColumns(repl);
 			String binding = chunkTextToBindingData(repl);
@@ -363,7 +392,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			value+=tableHeader3;
 			value+="table_"+title1;
 			value+=tableHeader4;
-			value+="<thead>\n<tr>\n";                                   
+			value+="<thead>\n<tr>\n";
 			for (String col:columns) {
 				value += "<th>"+col+"</th>\n";
 			}
@@ -394,7 +423,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			value = params.get(chunkTextToVariableName(repl));
 		} else if (repl.startsWith(JMX_MBEANS)) {
 			ObjectName mObjectName = new ObjectName( chunkTextToJmxObjectName(repl) );
-			//get ze beanie.					
+			//get ze beanie.
 			Object ovalue = this.mbs.getAttribute(mObjectName, chunkTextToJmxAttributeName(repl));
 			try {
 				value = String.valueOf(ovalue);
@@ -406,11 +435,11 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 						value = ovalue.toString();
 					} catch (Exception g) {
 						logger.error("Cant convert object value to string: " + ovalue.getClass().getName(),e);
-					}	
+					}
 				}
 			}
 		} else {
-			//loaded service..?
+			//loaded service..? TODO make this generic e.g. by service name. so service.latency.getLatency("xyz")
 			//${latency_service.getLatency("xyz")}
 			int dot = repl.indexOf('.');
 			int bkt = repl.indexOf('(');
@@ -450,7 +479,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					value = String.valueOf(m.invoke(o, vars));
 				} else {
 					Object obj = m.invoke(o, vars);
-					
+
 					//TOOD complex obj; get the values into proper structure.
 					if (obj.getClass().isArray()) {
 						Class ofArray = obj.getClass().getComponentType();
@@ -478,7 +507,63 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		}
 		return value;
 	}
-	//${binding=(Env Variables)[Var,Value][env.all]}
+
+    /**
+     * Process the following format:
+     * ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+     *
+     * various types will be supported and parsed differently.
+     * TODO refactor this stuff to be plugin/template based.
+     *
+     * @param repl
+     * @return
+     */
+    private String processDataViewRequest(String repl,Map<String,String> params) throws Exception {
+        String type = getDataViewType(repl);
+        if (type.equals(dataViewLineChart)) {
+            return processDataViewLineChartRequest(repl,params);
+        } else if (type.equals(dataViewPaginatedTable)) {
+            return processDataViewPaginatedTableRequest(repl,params);
+        }
+        throw new IllegalArgumentException("Invalid template type.");
+    }
+
+    private String processDataViewPaginatedTableRequest(String repl,Map<String,String> params) {
+        return null;
+    }
+
+    /**
+     * ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+     *
+     * @param repl
+     * @return
+     */
+    private String processDataViewLineChartRequest(String repl,Map<String,String> params) throws Exception {
+        //explode the options from the line...
+        String[] options=getOption("options",repl).split("[,]");
+        String source = getOption("source",repl);
+        String title = getOption("title",repl);
+        String id = getOption("id",title);
+        String[] source_flds=getOption("source-fields",repl).split("[,]");
+        String[] values = getValue(source,params).split(",");
+        //TODO fields.
+        String code = makeLineChartCode(id,values);
+        return code;
+    }
+
+    private String getOption(String option, String phrase) {
+        int s = phrase.indexOf(option+"=");
+        int e = s+option.length()+2;
+        int end = phrase.indexOf('"',e);
+        return phrase.substring(e,end);
+
+    }
+
+    private String getDataViewType(String repl) {
+        return getOption("type",repl);
+    }
+
+    //${binding=(Env Variables)[Var,Value][env.all]}
 	private String chunkTextToBindingTitle(String repl) {
 		return repl.substring(repl.indexOf('(')+1, repl.indexOf(')'));
 	}
@@ -545,7 +630,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	/**
 	 * process all folders and files using extensions of files to drive their
 	 * mime types.
-	 * 
+	 *
 	 * @param folder
 	 */
 	private void processOtherFolders(File folder) {
@@ -615,7 +700,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 
 	/**
 	 * Load and cache a resource.
-	 * 
+	 *
 	 * @param file
 	 * @param type
 	 */
@@ -635,7 +720,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		resources.put(path, resource);
 		resource.load();
 	}
-	
+
 	private static Map<String,String> getParameters(String query) {
 		Map<String,String> result = new HashMap<String,String>();
 		if (query == null) {
@@ -651,7 +736,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		}
 		return result;
 	}
-	
+
 	@Override
 	public void handle(HttpExchange t) throws IOException {
 		try {
@@ -659,11 +744,11 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			while (is.read() != -1) {
 				is.skip(0x100000);
 			}
-			
+
 			OutputStream body = t.getResponseBody();
 			long time = System.currentTimeMillis();
 			Map<String, String> params = getParameters(t.getRequestURI().getQuery());
-			
+
 			String address = t.getRequestURI().toString();
 			int endoff = address.length();
 			if (address.contains("?")) {
@@ -672,10 +757,6 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			String path = address.substring(1, endoff);
 			if (path == null || path.length() == 0) {
 				path = "index.html";
-			}
-			if (File.separator.equals("\\") && path.contains("/")) {
-				//windows but web url requested. convert url.
-				path = path.replace("/",File.separator);
 			}
 			Resource resource = resources.get(path);
 			if (resource == null) {
