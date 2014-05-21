@@ -1,8 +1,15 @@
 ${import=OaktreeHeader.html}
 
         <div id="page-wrapper">
-            ${table_binding=(Environment)[Var,Value][env.all]}
-                                         
+	        <div class="row"/>
+	        	<br/>
+	            <div class="panel-heading">
+	                System Environment Variables
+	            </div>
+	            <!-- .panel-heading -->
+	            <div class="panel-body">
+            		${data-view type="paginated_table" options="" id="env_table" title="Env" source="env.all" columns="Name,Value"}
+            	</div>                             
         </div>
         <!-- /#page-wrapper -->
 ${import=OaktreeTail.html}

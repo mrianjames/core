@@ -442,13 +442,18 @@
                         <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Non Heap</a>
                     </h4>
                 </div>
-                <div id="collapseTwo" class="panel-collapse collapse in">
+                <div id="collapseTwo" class="panel-collapse collapse">
                     <div class="panel-body">
                         <div class="panel panel-default">
                             <div class="panel-heading">NonHeap</div>
-                            <div class="panel-body">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-hover table-striped" id="table_NonHeap"><thead>
+                            <div class="panel-body" id="charty2div">
+                                  <div id="charty2" style="width:600px;height:300px"></div>
+
+                                 
+                             <!--</div>-->
+                            <!-- <div class="panel-body" > -->
+                                <div class="table-responsive" style="width:600px">
+                                    <table class="table table-bordered table-hover table-striped" id="table_NonHeap" ><thead>
                                     <tr>
                                         <th>Time</th>
                                         <th>Init</th>
@@ -464,7 +469,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
+                           </div>
                         </div>
                     </div>
                 </div>
@@ -600,6 +605,9 @@
     $(document).ready(function() {
         $('#table_CodeCache').dataTable();
     });
+
+}                                       
+});
 </script>
 
 
@@ -612,3 +620,4 @@ ${stable_binding=(EdenSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(E
 ${stable_binding=(TenuredGen)[Time,Init,Committed,Used,Max][memory.getSnapshots(Tenured Gen):time,init,committed,used,max]}
 ${stable_binding=(SurvivorSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Survivor Space):time,init,committed,used,max]}
 ${stable_binding=(CodeCache)[Time,Init,Committed,Used,Max][memory.getSnapshots(Code Cache):time,init,committed,used,max]}
+

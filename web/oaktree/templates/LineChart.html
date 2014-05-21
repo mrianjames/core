@@ -1,0 +1,20 @@
+<div id="${chart_id}" style="width:600px;height:300px"></div>
+	<script type="text/javascript">
+		$(function() {
+			var options = {
+		        legend:{         
+		            backgroundOpacity: 0.2,
+		            noColumns: 0,
+		            backgroundColor: "gray",   
+		            position: "ne"
+		        }
+		    };
+	    
+			var d1 = [${chart_data1}];
+			var d2 = [${chart_data2}];
+			var d3 = [${chart_data3}];
+			var d4 = [${chart_data4}];
+			$.plot("#${chart_id}", [ {label:"${chart_dataset_name1}",data:d1},{label:"${chart_dataset_name2}",data:d2},{label:"${chart_dataset_name3}",data:d3,{label="${chart_dataset_name4},data:d4],options );
+		});
+
+	</script>

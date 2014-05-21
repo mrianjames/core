@@ -1,0 +1,13 @@
+<div class="table-responsive">
+	<table class="table table-bordered table-hover table-striped" id="table_${table_id}">
+		<thead>
+			<tr>${table_headers}</tr>
+		</thead>
+		<tbody>${table_data}</tbody>
+	</table>
+</div>
+<script>
+	$(document).ready(function() {
+		$('#table_${table_id}').dataTable();
+	})
+ </script>

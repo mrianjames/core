@@ -1,16 +1,11 @@
 package com.oaktree.core.http;
 
-import com.oaktree.core.container.AbstractComponent;
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -18,11 +13,25 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.oaktree.core.container.AbstractComponent;
+import com.oaktree.core.utils.Text;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * A basic process that exposes http functionality.
@@ -75,57 +84,72 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	private final static String JAVA = "java";
 	private final static String IMPORT = "import=";
 
-    private static String lineChartCodeTemplate="<div id=\"${chart_id}\" style=\"width:600px;height:300px\"></div>\n" +
-            "\n" +
-            "                                        <script type=\"text/javascript\">\n" +
-            "                                        $(function() {\n" +
-            "                                            var d1 = [${chart_data}];\n" +
-            "                                            $.plot(\"#${chart_id}\", [ d1] );\n" +
-            "                                        });</script>";
+    private String lineChartCodeTemplate;
 
-    private static String paginatedTableCodeTemplate="<div class=\"table-responsive\">\n" +
-            "                                            <table class=\"table table-bordered table-hover table-striped\" id=\"table_${table_id}\">\n" +
-            "                                                <thead>\n" +
-            "                                                <tr>${table_headers}</tr>\n" +
-            "                                                </thead>\n" +
-            "                                                <tbody>${table_data}</tbody>\n" +
-            "                                            </table>\n" +
-            "                                        </div>\n" +
-            "                                        <script>\n" +
-            "                                        $(document).ready(function() {\n" +
-            "                                            $('#table_${table_id}').dataTable();\n" +
-            "                                        });\n" +
-            "                                    </script>";
+    private String paginatedTableCodeTemplate;
 
     private static String dataViewLineChart = "line_chart";
     private static String dataViewPaginatedTable = "paginated_table";
 
 
-    public String makeLineChartCode(String chartId, String[] values) {
-        StringBuilder b = new StringBuilder("");
-        int i = 0;
-        for (String value:values) {
-            b.append("[");
-            b.append(i);
-            b.append(",");
-            b.append(value);
-            b.append("],");
-            i++;
-        }
-        String datastr = b.toString();
-        String data = datastr.substring(0, datastr.length() - 1);
+    public String makeLineChartCode(String chartId, String[][] dataSets, String template, String[] dataSetNames) {
+        List<String> jsDataSets = new ArrayList<String>();
+        for (String[] values:dataSets) {
+        	StringBuilder b = new StringBuilder("");
+	        int i = 0;
+	        for (String value:values) {
+	            b.append("[");
+	            b.append(i);
+	            b.append(",");
+	            b.append(value);
+	            b.append("],");
+	            i++;
+	        }
+	        String datastr = b.toString();
+	        String data = datastr.substring(0, datastr.length() - 1);
 
-        return makeLineChartCode(chartId,data);
+	        jsDataSets.add(data);
+        }
+        
+        return makeLineChartCode(chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);
+    }
+    
+    private static String readTextFromResource(String file) {
+    	StringBuilder b = new StringBuilder();
+    	try {
+	    	FileReader fr = new FileReader(file);
+	    	BufferedReader br = new BufferedReader(fr);
+			
+			String line = br.readLine();
+			while (line != null) {
+				b.append(line);
+				b.append("\n");
+				line = br.readLine();
+			}
+			br.close();
+    	} catch (Exception e) {
+    		logger.error("Cannot load resource " + file + ": ",e);
+    		return null;
+    	}
+		return b.toString();
     }
 
-    private String makeLineChartCode(String chartId,String data) {
-        String code = lineChartCodeTemplate.replaceAll("\\$\\{chart_id\\}",chartId);
-        code = code.replaceAll("\\$\\{chart_data\\}",data);
+    private String makeLineChartCode(String chartId,String[] datasets,String template,String[] dataSetNames) {
+    	if (template == null) {
+        	template = "./web/oaktree/templates/LineChart.html";
+        }
+        String code = getLineChartTemplate(template).replaceAll("\\$\\{chart_id\\}",chartId);
+        int i = 0;
+        for (String data:datasets ) {
+        	code = code.replaceAll("\\$\\{chart_data"+(i+1)+"\\}",data);
+        	code = code.replaceAll("\\$\\{chart_dataset_name"+(i+1)+"\\}",dataSetNames[i]);
+        	i++;
+        }
         return code;
     }
 
     //table_id, table_data, table_header.
-    private String makePaginatedTableCode(String id, String title, String[] values, List<String> columns) {
+    private String makePaginatedTableCode(String id, String title, String[] values, List<String> columns, String template) {
         String headerRows = "";
         for (String col:columns) {
             headerRows = headerRows+"<th>"+col+"</th>";
@@ -148,11 +172,27 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                 data += "</tr>";
             }
         }
-        String code = paginatedTableCodeTemplate.replaceAll("\\$\\{table_headers\\}",headerRows);
+        if (template == null) {
+        	template = "./web/oaktree/templates/DataTable.html";
+        }
+        String code = getDataTableTemplate(template).replaceAll("\\$\\{table_headers\\}",headerRows);
         code = code.replaceAll("\\$\\{table_data\\}",data);
         code = code.replaceAll("\\$\\{table_id\\}",id);
         return code;
     }
+
+	private String getDataTableTemplate(String templateName) {
+		if (templateName != null && (paginatedTableCodeTemplate == null || isDebug)) {
+			paginatedTableCodeTemplate = readTextFromResource(templateName);
+		}
+		return paginatedTableCodeTemplate;
+	}
+	private String getLineChartTemplate(String templateName) {
+		if (templateName != null && (lineChartCodeTemplate == null || isDebug)) {
+			lineChartCodeTemplate = readTextFromResource(templateName);
+		}
+		return lineChartCodeTemplate;
+	}
 
 	public ProcessHttpServer(int port) {
 		this.port = port;
@@ -289,16 +329,8 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 				FileReader fr = new FileReader(file);
 				if (isText(type)) {
 					logger.info("Resource is textual: " + type);
-					BufferedReader br = new BufferedReader(fr);
-					StringBuilder b = new StringBuilder();
-					String line = br.readLine();
-					while (line != null) {
-						b.append(line);
-						b.append("\n");
-						line = br.readLine();
-					}
-					br.close();
-					parseResource(b.toString()); //TODO this needs to chunk it up
+					String text = readTextFromResource(file.getAbsolutePath());
+					parseResource(text); //TODO this needs to chunk it up
 
 					logger.info("Loaded resource of " + chunks.size() + " chunks");
 
@@ -435,6 +467,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                 String[] values = strValues.split(",");
                 Resource rt = resources.get(template);
                 if (rt != null) {
+                	if (isDebug) {
+                		rt.load(); //reload it on debug pls.
+                	}
                     for (String value:values) {
                         ctx.setVar(var,value);
                         builder.append(new String(getData(rt, ctx)));
@@ -495,7 +530,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     private String processEnvironmentVariable(String repl, ResourceContext ctx) throws Exception {
         String value = "";
         String e = chunkTextToVariableName(repl);
-        if (e.equals("all")) {
+        if (e.startsWith("all")) {
             value = flattenBulkReplacement(System.getenv());
         } else {
             value = System.getenv(e);
@@ -665,18 +700,27 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         String[] options=getOption("options",repl).split("[,]");
         String source = replaceSourceParams(getOption("source", repl), ctx);
         String title = checkAndReplaceVars(getOption("title",repl),ctx);
+        String template = getOption("template",repl);
+        String columns = getOption("columns",repl);
         String id = checkAndReplaceVars(getOption("id",repl,title+"PagTable"),ctx).replace(" ","");
         String source_flds=getOption("source-fields",repl); //TODO refactor the use of this. TODO remove spaces etc.
         String sourceFields = "";
-        List<String> columns = new ArrayList<String>();
-        for (String field:source_flds.split(",")) {
-            int br = field.indexOf("(");
-            sourceFields += field.substring(0,br)+",";
-            columns.add(field.substring(br+1,field.length()-1));
+        List<String> dcolumns = new ArrayList<String>();
+        if (columns != null) {
+	        for (String col:columns.split(",")) {
+	        	dcolumns.add(col);
+	        }
+        }
+        if (source_flds != null) {
+	        for (String field:source_flds.split(",")) {
+	            int br = field.indexOf("(");
+	            sourceFields += field.substring(0,br)+",";
+	            dcolumns.add(field.substring(br+1,field.length()-1));
+	        }
         }
         String[] values = getValue(source+":"+sourceFields,ctx).split(",");
         //TODO fields.
-        String code = makePaginatedTableCode(id, title, values, columns);
+        String code = makePaginatedTableCode(id, title, values, dcolumns,template);
         return code;
     }
 
@@ -692,25 +736,60 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         //explode the options from the line...
         String[] options=getOption("options",repl).split("[,]");
         String source = replaceSourceParams(getOption("source", repl), ctx);
+        String template = getOption("template", repl);
+        String keyField = getOption("key-field", repl);
+        String keyFormat = getOption("key-format", repl);
+        SimpleDateFormat keyFormatter = new SimpleDateFormat(keyFormat);
+        
         String title = checkAndReplaceVars(getOption("title", repl), ctx);
         String id = checkAndReplaceVars(getOption("id", repl, title+ "LineChart") , ctx).replace(" ","");
         String source_flds=getOption("source-fields", repl); //TODO refactor the use of this. TODO remove spaces etc.
         String sourceFields = "";
-        List<String> columns = new ArrayList<String>();
-        for (String field:source_flds.split(",")) {
-            int br = field.indexOf("(");
-            sourceFields += field.substring(0,br)+",";
-            columns.add(field.substring(br+1,field.length()-1));
+        int cols = 0;
+        if (keyField != null) {
+        	sourceFields += keyField+",";
+        	cols++;
         }
-        String[] values = getValue(source+":"+sourceFields,ctx).split(",");
+        //List<String> columns = new ArrayList<String>();
+        for (String field:source_flds.split(",")) {
+            //int br = field.indexOf("("); //TODO should ban that syntax here.
+            sourceFields += field+",";
+            cols++;
+            //columns.add(field.substring(br+1,field.length()-1));
+        }
+        String[] values = getValue(source+":"+sourceFields,ctx).split(","); //this should get us all our cols in a flat format. we dont want flat...
         //TODO fields.
-        String code = makeLineChartCode(id,values);
+        int sets = cols;
+        int dataSetSize = values.length/(sets);
+        String[][] vs = new String[sets][dataSetSize];
+        int set = -1;
+        int col = 0;
+        int row = 0;
+        int pos = 0;
+        //we need x datasets, the first is the "key", the rest are related to column 0 name, column 1 name etc.
+        //30 items, 2 cols, 1 key. 10 rows of data per thingy.
+        for (int i = 0; i < (values.length/cols);i++) { //go round 10 times.
+        	
+        		pos = (i * cols); //0,3,6,9...
+        		if ( keyFormatter != null) {
+        			vs[0][pos] = String.valueOf(keyFormatter.parse(values[i]).getTime()+Text.getToday());
+        		} else
+        			vs[0][pos] = String.valueOf(row);
+        		}
+				for (int j = 1; j < cols;j++) {
+					vs[j][pos] = values[i+j];
+				}
+        }
+        String code = makeLineChartCode(id,vs,template,source_flds.split(","));
         return code;
     }
 
     private String replaceSourceParams(String source, ResourceContext ctx) throws Exception {
         int s = source.indexOf("(");
         int e = source.indexOf(")");
+        if (s < 0 || e < 0) { //no params. maybe something like env.
+        	return source;
+        }
         String args = source.substring(s+1,e);
         String x = "";
         for (String arg:args.split("[,]")) {
@@ -779,10 +858,23 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	private String flattenBulkReplacement(Map<String, String> map) {
 		StringBuilder b = new StringBuilder();
 		for (Entry<String,String> e:map.entrySet()) {
-			b.append(e.getKey());
-			b.append(",");
-			b.append(e.getValue());
-			b.append(",");
+			if (e.getKey().contains(",")) {
+				logger.info("Key with comma");
+			}
+			if (e.getValue().contains(",")) {
+				logger.info("Key with comma");
+			}
+			if (e.getValue().contains("=")) {
+				logger.info("Key with comma");
+			}
+			if (!e.getKey().contains("=")) {
+				b.append(e.getKey());
+				b.append(",");
+				String v = e.getValue().replace("\\", "\\\\");
+				v = v.replace(",", "");
+				b.append(v);
+				b.append(",");
+			}
 		}
 		String str = b.toString();
 		return str.substring(0,str.length()-1);
@@ -887,6 +979,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		return false;
 	}
 
+	private void loadTemplate(String template) {
+		File f = new File(template);
+		
+	}
 	/**
 	 * Load and cache a resource.
 	 *
@@ -947,6 +1043,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			if (path == null || path.length() == 0) {
 				path = "index.html";
 			}
+			if (File.separator.equals("\\") && path.contains("/")) {
+				//windows but web url requested. convert url.
+				path = path.replace("/",File.separator);
+			}
 			Resource resource = resources.get(path);
 			if (resource == null) {
 				//try again...
@@ -988,6 +1088,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		}
 	}
 
+	
 
 	private void loadResource(Resource resource) {
 		resource.load();

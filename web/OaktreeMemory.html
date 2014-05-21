@@ -27,7 +27,7 @@ ${import=OaktreeHeader.html}
                                     <div class="tab-content">
                                         <div class="tab-pane fade in active" id="heapchart">
                                             <div class="panel-body">
-                                                ${data-view type="line_chart" options="" title="Heap" source="service.memory.getSnapshots(Heap)" source-fields="used(Used)"}
+                                                ${data-view type="line_chart" options="" title="Heap" source="service.memory.getSnapshots(Heap)" source-fields="used,committed" key-field="time" key-format="hh:mm:ss.SSS"}
                                             </div>
                                         </div>
                                         <div class="tab-pane fade" id="heapdata">
@@ -44,7 +44,7 @@ ${import=OaktreeHeader.html}
                                 <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Non Heap</a>
                             </h4>
                         </div>
-                        <div id="collapseTwo" class="panel-collapse collapse in">
+                        <div id="collapseTwo" class="panel-collapse collapse">
                             <div class="panel-body">
                                 <div class="panel-body">
                                     <ul class="nav nav-tabs">
@@ -95,5 +95,6 @@ ${import=OaktreeHeader.html}
         </div>
         <!-- /#page-wrapper -->
         <!-- Page-Level Demo Scripts - Tables - Use for reference -->
+
 
 ${import=OaktreeTail.html}
