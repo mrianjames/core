@@ -601,3 +601,14 @@
         $('#table_CodeCache').dataTable();
     });
 </script>
+
+
+
+
+
+${stable_binding=(Heap)[Time,Init,Committed,Used,Max][memory.getSnapshots(Heap):time,init,committed,used,max]}
+${stable_binding=(NonHeap)[Time,Init,Committed,Used,Max][memory.getSnapshots(NonHeap):time,init,committed,used,max]}
+${stable_binding=(EdenSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Eden Space):time,init,committed,used,max]}
+${stable_binding=(TenuredGen)[Time,Init,Committed,Used,Max][memory.getSnapshots(Tenured Gen):time,init,committed,used,max]}
+${stable_binding=(SurvivorSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Survivor Space):time,init,committed,used,max]}
+${stable_binding=(CodeCache)[Time,Init,Committed,Used,Max][memory.getSnapshots(Code Cache):time,init,committed,used,max]}

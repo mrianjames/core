@@ -66,7 +66,12 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     private final static String DATA_VIEW = "data-view";
 	private final static String SYS = "sys";
 	private final static String PARAM = "param";
+    private final static String VAR = "var";
+    private final static String TVAR = "tvar";
+    private final static String VALUE = "value";
+    private final static String SERVICE = "service";
 	private final static String JMX_MBEANS = "jmx";
+    private final static String FOR="for";
 	private final static String JAVA = "java";
 	private final static String IMPORT = "import=";
 
@@ -78,21 +83,77 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             "                                            $.plot(\"#${chart_id}\", [ d1] );\n" +
             "                                        });</script>";
 
+    private static String paginatedTableCodeTemplate="<div class=\"table-responsive\">\n" +
+            "                                            <table class=\"table table-bordered table-hover table-striped\" id=\"table_${table_id}\">\n" +
+            "                                                <thead>\n" +
+            "                                                <tr>${table_headers}</tr>\n" +
+            "                                                </thead>\n" +
+            "                                                <tbody>${table_data}</tbody>\n" +
+            "                                            </table>\n" +
+            "                                        </div>\n" +
+            "                                        <script>\n" +
+            "                                        $(document).ready(function() {\n" +
+            "                                            $('#table_${table_id}').dataTable();\n" +
+            "                                        });\n" +
+            "                                    </script>";
+
     private static String dataViewLineChart = "line_chart";
     private static String dataViewPaginatedTable = "paginated_table";
 
 
     public String makeLineChartCode(String chartId, String[] values) {
         StringBuilder b = new StringBuilder("");
+        int i = 0;
         for (String value:values) {
-            b.append(value);
+            b.append("[");
+            b.append(i);
             b.append(",");
+            b.append(value);
+            b.append("],");
+            i++;
         }
-        String code = lineChartCodeTemplate.replaceAll("\\$\\{chart_id\\}",chartId);
-        code = code.replaceAll("\\$\\{chart_data\\}",b.toString());
-        return code;
+        String datastr = b.toString();
+        String data = datastr.substring(0, datastr.length() - 1);
 
+        return makeLineChartCode(chartId,data);
     }
+
+    private String makeLineChartCode(String chartId,String data) {
+        String code = lineChartCodeTemplate.replaceAll("\\$\\{chart_id\\}",chartId);
+        code = code.replaceAll("\\$\\{chart_data\\}",data);
+        return code;
+    }
+
+    //table_id, table_data, table_header.
+    private String makePaginatedTableCode(String id, String title, String[] values, List<String> columns) {
+        String headerRows = "";
+        for (String col:columns) {
+            headerRows = headerRows+"<th>"+col+"</th>";
+        }
+        int columnCount = columns.size();
+
+        String data = "";
+        if (columnCount > 0) {
+            //<tr><td>21:57:35.715</td><td>20803200</td><td>20185088</td><td>12627048</td><td>322371584</td></tr>
+            int rows = values.length / columns.size();
+            for (int i = 0; i < rows;i++) {
+                data += "<tr>";
+                int c = 0;
+                for (String col : columns) {
+                    data+="<td>";
+                    data+=values[(i*columnCount)+c];
+                    data+="</td>";
+                    c++;
+                }
+                data += "</tr>";
+            }
+        }
+        String code = paginatedTableCodeTemplate.replaceAll("\\$\\{table_headers\\}",headerRows);
+        code = code.replaceAll("\\$\\{table_data\\}",data);
+        code = code.replaceAll("\\$\\{table_id\\}",id);
+        return code;
+    }
+
 	public ProcessHttpServer(int port) {
 		this.port = port;
 		mbs = ManagementFactory.getPlatformMBeanServer();
@@ -191,6 +252,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					ResourceChunk chunk = new ResourceChunk(ResourceChunkType.PLAIN,string.substring(start,foundAt));
 					chunks.add(chunk);
 				}
+                //TODO nested ${}....
 				//look for the end.
 				int end = string.indexOf(key_end, foundAt);
 				lastIndex= end;
@@ -201,7 +263,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 						ResourceChunk chunk = new ResourceChunk(ResourceChunkType.IMPORT,imp);
 						chunks.add(chunk);
 					}
-				} else {
+				} else if (text.startsWith(FOR)) {
+                    ResourceChunk chunk = new ResourceChunk(ResourceChunkType.CODE,text);
+                    chunks.add(chunk);
+                } else {
 					ResourceChunk chunk = new ResourceChunk(ResourceChunkType.VARIABLE,text);
 					chunks.add(chunk);
 				}
@@ -312,15 +377,33 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		return dweb;
 	}
 
+    private class ResourceContext {
+        public Map<String, String> params;
+        public Map<String,String> variables;
+
+        public void setVar(String var, String value) {
+            if (variables == null) {
+                variables=new HashMap<String,String>();
+            }
+            variables.put(var,value);
+        }
+        public String getValue(String variableName) {
+            if (variables == null) {
+                return null;
+            }
+            return variables.get(variableName);
+        }
+    }
+
 	/**
 	 * The key method. If this is a binary then its single chunk - return binary data.
 	 * If its text it may have replacements - if it does not then return binary data.
 	 * If replacements and text then we will have to go through the chunks, evaluate the values for
 	 * the replacement parts and glue together into the final string, of which we return the binary data for.
-	 * @param params
+	 * @param ctx - context of variables and parameters we have in scope (maybe from parent resource).
 	 * @return
 	 */
-	public byte[] getData(Resource resource,Map<String, String> params) throws Exception {
+	public byte[] getData(Resource resource,ResourceContext ctx) throws Exception {
 		if (!isText(resource.getType()) || !resource.hasReplacements()) {
 			return resource.getChunks().get(0).getBytes();
 		}
@@ -329,184 +412,232 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			if (chunk.getChunkType().equals(ResourceChunkType.PLAIN)) {
 				builder.append(chunk.getString());
 			} else if (chunk.getChunkType().equals(ResourceChunkType.VARIABLE)) {
-				String value = processVariableReplacement(chunk,params);
+				String value = processVariableReplacement(chunk,ctx);
 				builder.append(value);
 			} else if (chunk.getChunkType().equals(ResourceChunkType.IMPORT)) {
 				//lets go and get another resource and inject its content input here.
 				Resource imp = resources.get(chunkTextToImport(chunk.getString()));
 				if (imp != null) {
 
-					builder.append(new String(getData(imp,params)));
+					builder.append(new String(getData(imp,ctx)));
 				} else {
 					logger.warn("Cannot find import "+chunkTextToImport(chunk.getString()));
 				}
 
-			} else {
-				//TODO - code!
+			} else if (chunk.getChunkType().equals(ResourceChunkType.CODE)) {
+                //TODO am i a for loop or other code?????
+                logger.info("handling code..."+chunk.getString());
+                //get the code from the template name...
+                String template = getOption("template",chunk.getString());
+                String source = getOption("source",chunk.getString());
+                String var = getOption("var",chunk.getString());
+                String strValues= getValue(source, ctx);
+                String[] values = strValues.split(",");
+                Resource rt = resources.get(template);
+                if (rt != null) {
+                    for (String value:values) {
+                        ctx.setVar(var,value);
+                        builder.append(new String(getData(rt, ctx)));
+                    }
+                }  else {
+                    logger.warn("Cannot find iteration template "+chunkTextToImport(chunk.getString()));
+                }
+            }
+            else {
+				//TODO - code! THIS MEANS FORS
 			}
 		}
 		return builder.toString().getBytes();
 	}
 
-	private String processVariableReplacement(ResourceChunk chunk,Map<String,String> params) throws Exception {
+	private String processVariableReplacement(ResourceChunk chunk,ResourceContext ctx) throws Exception {
 		String repl = chunk.getString();
-			String value = getValue(repl,params);
+			String value = getValue(repl,ctx);
 			return value;
 	}
 
-	private String getValue(String repl, Map<String, String> params) throws Exception {
+	private String getValue(String repl, ResourceContext ctx) throws Exception {
 		String value= "";
 		if (repl.startsWith(ENV)) {
-			String e = chunkTextToVariableName(repl);
-			if (e.equals("all")) {
-				value = flattenBulkReplacement(System.getenv());
-			} else {
-				value = System.getenv(e);
-			}
+			value = processEnvironmentVariable(repl,ctx);
 		} else if (repl.startsWith(JAVA)) {
-			//${java.java.lang.System.currentTimeMillis()}
-			String clazz = chunkTextToJavaClassName(repl);
-			String method = chunkTextToJavaMethodName(repl);
-			Class c = Class.forName(clazz);
-			Method m = c.getMethod(method);
-			if (m != null) {
-				value = String.valueOf(m.invoke(null));
-			}
-
+            value = processJavaStaticMethod(repl,ctx);
 		}else if (repl.startsWith(SYS)) {
 			value = System.getProperty(chunkTextToVariableName(repl));
 		} else if (repl.startsWith(DATA_VIEW)) {
-            value = this.processDataViewRequest(repl,params);
-        }
-
-
-        else if (repl.startsWith(TABLE_BINDING)) {
-			//${binding=(Env Variables)[Var,Value][env.all]}
-			String[] columns = chunkTextToBindingColumns(repl);
-			String binding = chunkTextToBindingData(repl);
-			String title1 = chunkTextToBindingTitle(repl);
-			//value+=tableHeader1 ;
-			//value+=title1;
-			value+=tableHeader2;
-			value+=title1;
-			value+=tableHeader3;
-			value+="table_"+title1;
-			value+=tableHeader4;
-			value+="<thead>\n<tr>\n";
-			for (String col:columns) {
-				value += "<th>"+col+"</th>\n";
-			}
-			value+="</tr>\n</thead>\n<tbody>\n";
-			String bindingValue = getValue(binding,params);
-			String[] bits = bindingValue.split("[,]");
-			int i = 0;
-			for (String bit:bits) {
-				if (i == 0) {
-					value+="<tr>";
-				}
-				value+="<td>";
-				value+=bit;
-				value+="</td>";
-				if ((i+1)%columns.length == 0 && i>0) {
-					if (i < bits.length-1) {
-						value+="</tr>\n<tr>";
-					} else {
-						value+="</tr>\n";
-					}
-				}
-				i++;
-			}
-			value+="</tbody>";
-			value+=tableTail;
-			//now values.
+            value = this.processDataViewRequest(repl,ctx);
+        } else if (repl.startsWith(TABLE_BINDING)) {
+			throw new IllegalStateException("Deprecated api. pls upgrade to "+DATA_VIEW);
 		} else if (repl.startsWith(PARAM)) {
-			value = params.get(chunkTextToVariableName(repl));
+			value = ctx.params.get(chunkTextToVariableName(repl));
 		} else if (repl.startsWith(JMX_MBEANS)) {
-			ObjectName mObjectName = new ObjectName( chunkTextToJmxObjectName(repl) );
-			//get ze beanie.
-			Object ovalue = this.mbs.getAttribute(mObjectName, chunkTextToJmxAttributeName(repl));
-			try {
-				value = String.valueOf(ovalue);
-			} catch (Exception e) {
-				try {
-					value = (String)ovalue;
-				} catch (Exception f) {
-					try {
-						value = ovalue.toString();
-					} catch (Exception g) {
-						logger.error("Cant convert object value to string: " + ovalue.getClass().getName(),e);
-					}
-				}
-			}
+			value = processJmx(repl,ctx);
+		} else if (repl.startsWith(VAR)) {
+            value = ctx.getValue(chunkTextToVariableName(repl));
+        } else if (repl.startsWith(TVAR)) {
+            value = ctx.getValue(chunkTextToVariableName(repl));
+            if (value != null) {
+                value = value.replaceAll(" ","");
+            }
+        } else if (repl.startsWith(VALUE)) {
+            value = repl.substring(VALUE.length());
+        } else if (repl.startsWith(SERVICE)) {
+            value = processService(repl,ctx);
 		} else {
-			//loaded service..? TODO make this generic e.g. by service name. so service.latency.getLatency("xyz")
-			//${latency_service.getLatency("xyz")}
-			int dot = repl.indexOf('.');
-			int bkt = repl.indexOf('(');
-			int pend = repl.indexOf(')');
-			int clarstart = repl.indexOf(':');
-			String service = repl.substring(0,dot);
-			String method = repl.substring(dot+1,bkt);
-			String clarification = null;
-			if (clarstart > -1) {
-				clarification = repl.substring(clarstart+1,repl.length());
-			}
-			String[] pms = new String[]{};
-			String p = repl.substring(bkt+1,pend);
-			if (p != null && p.length() > 0) {
-				pms = p.split(",");
-			}
-			Object o = this.services.get(service);
-			if (o != null)  {
-				Method m = null;
-				Object[] vars = new Object[pms.length];
-				for (Method mtd:o.getClass().getMethods()) {
-					if (mtd.getName().equals(method)) {
-						Class<?>[] ptypes = mtd.getParameterTypes();
-						if (ptypes.length == pms.length) {
-							//TODO better checking.
-							int i = 0;
-							for (Class<?> type:ptypes) {
-								vars[i] = type.cast(pms[i]);
-								i++;
-							}
-							m = mtd;
-							break;
-						}
-					}
-				}
-				if (clarification == null)  {
-					value = String.valueOf(m.invoke(o, vars));
-				} else {
-					Object obj = m.invoke(o, vars);
-
-					//TOOD complex obj; get the values into proper structure.
-					if (obj.getClass().isArray()) {
-						Class ofArray = obj.getClass().getComponentType();
-						int sz = Array.getLength(obj);
-						for (int i = 0; i < sz; i++ ){
-							Object ch = Array.get(obj, i);
-							for (String c:clarification.split("[,]")) {
-								String cname = "get"+Character.toUpperCase(c.charAt(0))+c.substring(1);
-								Method x = ofArray.getMethod(cname);
-								value+=String.valueOf(x.invoke(ch))+",";
-							}
-						}
-					} else {
-						for (String c:clarification.split("[,]")) {
-							String cname = "get"+Character.toUpperCase(c.charAt(0))+c.substring(1);
-							Method x = obj.getClass().getMethod(cname);
-							value+=String.valueOf(x.invoke(obj))+",";
-						}
-					}
-					if (value.length() > 0){
-						value = value.substring(0,value.length()-1);
-					}
-				}
-			}
-		}
+            //mmmm. dodgy.
+            //value = processService(repl,ctx);
+            return repl;
+            //throw new IllegalStateException("Invalid value type requested..."+repl);
+        }
 		return value;
 	}
+
+    private String processEnvironmentVariable(String repl, ResourceContext ctx) throws Exception {
+        String value = "";
+        String e = chunkTextToVariableName(repl);
+        if (e.equals("all")) {
+            value = flattenBulkReplacement(System.getenv());
+        } else {
+            value = System.getenv(e);
+        }
+        return value;
+    }
+
+    private String processJavaStaticMethod(String repl, ResourceContext ctx) throws Exception {
+        String value = "";
+        //TODO args
+        //${java.java.lang.System.currentTimeMillis()}
+        String clazz = chunkTextToJavaClassName(repl);
+        String method = chunkTextToJavaMethodName(repl);
+        Class c = Class.forName(clazz);
+        Method m = c.getMethod(method);
+        if (m != null) {
+            value = String.valueOf(m.invoke(null));
+            //TODO arrays
+        }
+        return value;
+    }
+
+    private String processJmx(String repl, ResourceContext ctx) throws Exception {
+        String value = "";
+        ObjectName mObjectName = new ObjectName( chunkTextToJmxObjectName(repl) );
+        //get ze beanie.
+        Object ovalue = this.mbs.getAttribute(mObjectName, chunkTextToJmxAttributeName(repl));
+        try {
+            value = String.valueOf(ovalue);
+        } catch (Exception e) {
+            try {
+                value = (String)ovalue;
+            } catch (Exception f) {
+                try {
+                    value = ovalue.toString();
+                } catch (Exception g) {
+                    logger.error("Cant convert object value to string: " + ovalue.getClass().getName(),e);
+                }
+            }
+        }
+        return value;
+    }
+
+    private String processService(String phrase, ResourceContext ctx) throws Exception {
+        String repl = phrase;
+
+        if (phrase.startsWith(SERVICE)) {
+            repl = phrase.substring(SERVICE.length()+1);
+        }
+        //might be a variable.
+        String value = ctx.getValue(repl);
+        if (value == null) {
+            value = "";
+            //loaded service..? TODO make this generic e.g. by service name. so service.latency.getLatency("xyz")
+            //${latency_service.getLatency("xyz")}
+
+            int dot = repl.indexOf('.');
+            int bkt = repl.indexOf('(');
+            int pend = repl.indexOf(')');
+            int clarstart = repl.indexOf(':');
+            String service = repl.substring(0, dot);
+            String method = repl.substring(dot + 1, bkt);
+            String clarification = null;
+            if (clarstart > -1) {
+                clarification = repl.substring(clarstart + 1, repl.length());
+            }
+            //method parameters.
+            String[] pms = new String[]{};
+            String p = repl.substring(bkt + 1, pend);
+            if (p != null && p.length() > 0) {
+                pms = p.split(",");
+            }
+            for (int i = 0; i <pms.length;i++) {
+                if (pms[i].contains(":")) {
+                    pms[i] = getValue(pms[i],ctx);
+                }
+            }
+            Object o = this.services.get(service);
+            if (o != null) {
+                Method m = null;
+                Object[] vars = new Object[pms.length];
+                for (Method mtd : o.getClass().getMethods()) {
+                    if (mtd.getName().equals(method)) {
+                        Class<?>[] ptypes = mtd.getParameterTypes();
+                        if (ptypes.length == pms.length) {
+                            //TODO better checking.
+                            int i = 0;
+                            for (Class<?> type : ptypes) {
+                                vars[i] = type.cast(pms[i]);
+                                i++;
+                            }
+                            m = mtd;
+                            break;
+                        }
+                    }
+                }
+                if (clarification == null) {
+                    Object v = m.invoke(o, vars);
+                    //handle non castable things....like array..
+                    if (v.getClass().isArray()) {
+                        int sz = Array.getLength(v);
+                        for (int i = 0; i < sz; i++) {
+                            if (value == null) {
+                                value = "";
+                            }
+                            Object ch = Array.get(v, i);
+                            value += String.valueOf(ch) + ",";
+                        }
+                    } else {
+                        value = String.valueOf(v);
+                        //TODO any others?
+                    }
+                } else {
+                    Object obj = m.invoke(o, vars);
+
+                    //TOOD complex obj; get the values into proper structure.
+                    if (obj.getClass().isArray()) {
+                        Class ofArray = obj.getClass().getComponentType();
+                        int sz = Array.getLength(obj);
+                        for (int i = 0; i < sz; i++) {
+                            Object ch = Array.get(obj, i);
+                            for (String c : clarification.split("[,]")) {
+                                String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
+                                Method x = ofArray.getMethod(cname);
+                                value += String.valueOf(x.invoke(ch)) + ",";
+                            }
+                        }
+                    } else {
+                        for (String c : clarification.split("[,]")) {
+                            String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
+                            Method x = obj.getClass().getMethod(cname);
+                            value += String.valueOf(x.invoke(obj)) + ",";
+                        }
+                    }
+                    if (value.length() > 0) {
+                        value = value.substring(0, value.length() - 1);
+                    }
+                }
+            }
+        }
+        return value;
+    }
 
     /**
      * Process the following format:
@@ -518,19 +649,38 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
      * @param repl
      * @return
      */
-    private String processDataViewRequest(String repl,Map<String,String> params) throws Exception {
+    private String processDataViewRequest(String repl,ResourceContext ctx) throws Exception {
         String type = getDataViewType(repl);
         if (type.equals(dataViewLineChart)) {
-            return processDataViewLineChartRequest(repl,params);
+            return processDataViewLineChartRequest(repl,ctx);
         } else if (type.equals(dataViewPaginatedTable)) {
-            return processDataViewPaginatedTableRequest(repl,params);
+            return processDataViewPaginatedTableRequest(repl,ctx);
         }
         throw new IllegalArgumentException("Invalid template type.");
     }
 
-    private String processDataViewPaginatedTableRequest(String repl,Map<String,String> params) {
-        return null;
+    //${data-view type="paginated_table" options="" title="Heap" source="memory.getSnapshots(Heap)" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
+    private String processDataViewPaginatedTableRequest(String repl,ResourceContext ctx) throws Exception {
+        //explode the options from the line...
+        String[] options=getOption("options",repl).split("[,]");
+        String source = replaceSourceParams(getOption("source", repl), ctx);
+        String title = checkAndReplaceVars(getOption("title",repl),ctx);
+        String id = checkAndReplaceVars(getOption("id",repl,title+"PagTable"),ctx).replace(" ","");
+        String source_flds=getOption("source-fields",repl); //TODO refactor the use of this. TODO remove spaces etc.
+        String sourceFields = "";
+        List<String> columns = new ArrayList<String>();
+        for (String field:source_flds.split(",")) {
+            int br = field.indexOf("(");
+            sourceFields += field.substring(0,br)+",";
+            columns.add(field.substring(br+1,field.length()-1));
+        }
+        String[] values = getValue(source+":"+sourceFields,ctx).split(",");
+        //TODO fields.
+        String code = makePaginatedTableCode(id, title, values, columns);
+        return code;
     }
+
+
 
     /**
      * ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
@@ -538,21 +688,60 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
      * @param repl
      * @return
      */
-    private String processDataViewLineChartRequest(String repl,Map<String,String> params) throws Exception {
+    private String processDataViewLineChartRequest(String repl,ResourceContext ctx) throws Exception {
         //explode the options from the line...
         String[] options=getOption("options",repl).split("[,]");
-        String source = getOption("source",repl);
-        String title = getOption("title",repl);
-        String id = getOption("id",title);
-        String[] source_flds=getOption("source-fields",repl).split("[,]");
-        String[] values = getValue(source,params).split(",");
+        String source = replaceSourceParams(getOption("source", repl), ctx);
+        String title = checkAndReplaceVars(getOption("title", repl), ctx);
+        String id = checkAndReplaceVars(getOption("id", repl, title+ "LineChart") , ctx).replace(" ","");
+        String source_flds=getOption("source-fields", repl); //TODO refactor the use of this. TODO remove spaces etc.
+        String sourceFields = "";
+        List<String> columns = new ArrayList<String>();
+        for (String field:source_flds.split(",")) {
+            int br = field.indexOf("(");
+            sourceFields += field.substring(0,br)+",";
+            columns.add(field.substring(br+1,field.length()-1));
+        }
+        String[] values = getValue(source+":"+sourceFields,ctx).split(",");
         //TODO fields.
         String code = makeLineChartCode(id,values);
         return code;
     }
 
+    private String replaceSourceParams(String source, ResourceContext ctx) throws Exception {
+        int s = source.indexOf("(");
+        int e = source.indexOf(")");
+        String args = source.substring(s+1,e);
+        String x = "";
+        for (String arg:args.split("[,]")) {
+            x = x+getValue(arg,ctx)+",";
+        }
+        if (x.length() > 0) {
+            x = x.substring(0,x.length()-1);
+        }
+        return source.substring(0,s+1) + x+source.substring(e);
+    }
+
+    private String checkAndReplaceVars(String repl, ResourceContext ctx) {
+        if (repl.contains(".")) {
+            try {
+                return getValue(repl, ctx);
+            } catch (Exception e) {
+                logger.error("Cannot parse replacement "+repl,e);
+                return null;
+            }
+        }
+        return repl;
+    }
+
     private String getOption(String option, String phrase) {
+        return getOption(option,phrase,null);
+    }
+    private String getOption(String option, String phrase, String defaultValue) {
         int s = phrase.indexOf(option+"=");
+        if (s == -1) {
+            return defaultValue;
+        }
         int e = s+option.length()+2;
         int end = phrase.indexOf('"',e);
         return phrase.substring(e,end);
@@ -785,8 +974,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 				loadResource(resource);
 				
 			}
-			
-			byte[] data = getData(resource,params);
+			ResourceContext ctx = new ResourceContext();
+            ctx.params = params;
+			byte[] data = getData(resource,ctx);
 			t.sendResponseHeaders(200, data.length);
 			body.write(data);
 			

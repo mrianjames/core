@@ -27,12 +27,12 @@ ${import=OaktreeHeader.html}
                                     <div class="tab-content">
                                         <div class="tab-pane fade in active" id="heapchart">
                                             <div class="panel-body">
-                                                ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+                                                ${data-view type="line_chart" options="" title="Heap" source="service.memory.getSnapshots(Heap)" source-fields="used(Used)"}
                                             </div>
                                         </div>
                                         <div class="tab-pane fade" id="heapdata">
                                             <div class="panel-body">
-                                                ${data-view type="paginated_table" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
+                                                ${data-view type="paginated_table" options="" title="Heap" source="service.memory.getSnapshots(Heap)" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
                                             </div>
                                         </div>
                                     </div>
@@ -41,46 +41,59 @@ ${import=OaktreeHeader.html}
                         </div>
                         <div class="panel-heading">
                             <h4 class="panel-title">
-                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Heap</a>
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Non Heap</a>
                             </h4>
                         </div>
                         <div id="collapseTwo" class="panel-collapse collapse in">
                             <div class="panel-body">
                                 <div class="panel-body">
                                     <ul class="nav nav-tabs">
-                                        <li class="active"><a href="#nonheapchart" data-toggle="tab">Heap Chart</a></li>
-                                        <li><a href="#nonheapdata" data-toggle="tab">Non Heap Data</a></li>
+                                        <li class="active"><a href="#nonheapchart" data-toggle="tab">NonHeap Chart</a></li>
+                                        <li><a href="#nonheapdata" data-toggle="tab">NonHeap Data</a></li>
                                     </ul>
 
                                     <!-- Tab panes -->
                                     <div class="tab-content">
                                         <div class="tab-pane fade in active" id="nonheapchart">
                                             <div class="panel-body">
-                                                ${data-view type="line_chart" options="" title="Non Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+                                                ${data-view type="line_chart" options="" id="nonheap_line_chart" title="Non Heap" source="service.memory.getSnapshots(NonHeap)" source-fields="used(Used)"}
                                             </div>
                                         </div>
                                         <div class="tab-pane fade" id="nonheapdata">
                                             <div class="panel-body">
-                                                ${data-view type="paginated_table" options="" title="Non Heap" source="memory.getSnapshots('NonHeap')" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
+                                                ${data-view type="paginated_table" options="" id="nonheap_table" title="Non Heap" source="service.memory.getSnapshots(NonHeap)" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree">Pools</a>
+                            </h4>
+                        </div>
+                        <div id="collapseThree" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                <div class="panel-body">
+                                    <ul class="nav nav-tabs">
+                                        ${for var="pool" source="service.memory.getPoolNames()" template="OaktreeMemoryPoolList.html"}
+                                    </ul>
+                                    <div class="tab-content">
+                                        ${for var="pool" source="service.memory.getPoolNames()" template="OaktreeMemoryPools.html"}
+                                    </div>
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+
+        </div>
 
         </div>
         <!-- /#page-wrapper -->
         <!-- Page-Level Demo Scripts - Tables - Use for reference -->
 
-${stable_binding=(Heap)[Time,Init,Committed,Used,Max][memory.getSnapshots(Heap):time,init,committed,used,max]}
-${stable_binding=(NonHeap)[Time,Init,Committed,Used,Max][memory.getSnapshots(NonHeap):time,init,committed,used,max]}
-${stable_binding=(EdenSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Eden Space):time,init,committed,used,max]}
-${stable_binding=(TenuredGen)[Time,Init,Committed,Used,Max][memory.getSnapshots(Tenured Gen):time,init,committed,used,max]}
-${stable_binding=(SurvivorSpace)[Time,Init,Committed,Used,Max][memory.getSnapshots(Survivor Space):time,init,committed,used,max]}
-${stable_binding=(CodeCache)[Time,Init,Committed,Used,Max][memory.getSnapshots(Code Cache):time,init,committed,used,max]}
-    
 ${import=OaktreeTail.html}
