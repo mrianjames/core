@@ -94,23 +94,23 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 
     public String makeLineChartCode(String chartId, String[][] dataSets, String template, String[] dataSetNames) {
         List<String> jsDataSets = new ArrayList<String>();
-        for (String[] values:dataSets) {
-        	StringBuilder b = new StringBuilder("");
-	        int i = 0;
-	        for (String value:values) {
-	            b.append("[");
-	            b.append(i);
-	            b.append(",");
-	            b.append(value);
-	            b.append("],");
-	            i++;
-	        }
-	        String datastr = b.toString();
-	        String data = datastr.substring(0, datastr.length() - 1);
+        for (int i = 1; i < dataSets.length;i++) { // 3 datasets came in, only 2 will we parse.
+            StringBuilder b = new StringBuilder("");
 
-	        jsDataSets.add(data);
+            for (int j = 0; j < dataSets[0].length; j++) {
+
+                b.append("[");
+                b.append(dataSets[0][j]);
+                b.append(",");
+                b.append(dataSets[i][j]);
+                b.append("],");
+            }
+            String datastr = b.toString();
+            String data = datastr.substring(0, datastr.length() - 1);
+
+            jsDataSets.add(data);
+
         }
-        
         return makeLineChartCode(chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);
     }
     
@@ -140,9 +140,12 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         }
         String code = getLineChartTemplate(template).replaceAll("\\$\\{chart_id\\}",chartId);
         int i = 0;
-        for (String data:datasets ) {
+        int maxDataSets = 4;
+        for (int set = 0; set < maxDataSets; set++) {
+            String data = (set < datasets.length) ? datasets[set] : "";
+            String name = (set < datasets.length) ? dataSetNames[set] : "";
         	code = code.replaceAll("\\$\\{chart_data"+(i+1)+"\\}",data);
-        	code = code.replaceAll("\\$\\{chart_dataset_name"+(i+1)+"\\}",dataSetNames[i]);
+        	code = code.replaceAll("\\$\\{chart_dataset_name"+(i+1)+"\\}",name);
         	i++;
         }
         return code;
@@ -739,7 +742,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         String template = getOption("template", repl);
         String keyField = getOption("key-field", repl);
         String keyFormat = getOption("key-format", repl);
-        SimpleDateFormat keyFormatter = new SimpleDateFormat(keyFormat);
+        SimpleDateFormat keyFormatter = null;
+        if (keyFormat != null) {
+            keyFormatter = new SimpleDateFormat(keyFormat);
+        }
         
         String title = checkAndReplaceVars(getOption("title", repl), ctx);
         String id = checkAndReplaceVars(getOption("id", repl, title+ "LineChart") , ctx).replace(" ","");
@@ -768,17 +774,22 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         int pos = 0;
         //we need x datasets, the first is the "key", the rest are related to column 0 name, column 1 name etc.
         //30 items, 2 cols, 1 key. 10 rows of data per thingy.
-        for (int i = 0; i < (values.length/cols);i++) { //go round 10 times.
-        	
-        		pos = (i * cols); //0,3,6,9...
-        		if ( keyFormatter != null) {
-        			vs[0][pos] = String.valueOf(keyFormatter.parse(values[i]).getTime()+Text.getToday());
-        		} else
-        			vs[0][pos] = String.valueOf(row);
-        		}
-				for (int j = 1; j < cols;j++) {
-					vs[j][pos] = values[i+j];
-				}
+        try {
+            for (int i = 0; i < (values.length / cols); i++) { //go round 10 times.
+
+                pos = (i * cols); //0,3,6,9...
+                if (keyFormatter != null) {
+                    vs[0][i] = String.valueOf(keyFormatter.parse(values[pos]).getTime() + Text.getToday());
+                } else {
+                    vs[0][i] = String.valueOf(row);
+                }
+                for (int j = 1; j < cols; j++) {
+                    vs[j][i] = values[pos + j];
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Failure!!! pos:"+pos +" cols: "+cols + " valueslen: "+values.length,e);
         }
         String code = makeLineChartCode(id,vs,template,source_flds.split(","));
         return code;
@@ -1048,7 +1059,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 				path = path.replace("/",File.separator);
 			}
 			Resource resource = resources.get(path);
-			if (resource == null) {
+			if (resource == null || resource.getChunks() == null  || resource.getChunks().size() == 0) {
 				//try again...
 				File f = new File(getRoot()+File.separator+path);
 				if (f.exists()) {
@@ -1062,6 +1073,13 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 					return;
 				}
 			}
+            if (resource.getChunks() == null || resource.getChunks().size() == 0) {
+                byte[] msg = ("Not a valid endpoint (maybe directory?): " + path).getBytes();
+                t.sendResponseHeaders(200, msg.length);
+                body.write(msg);
+                body.close();
+                return;
+            }
 			Headers h = t.getResponseHeaders();
 			h.set("Content-Type", resource.getType());
 			h.set("Server", "OaktreeHttpServer/1.0 (Simple 4.0)");
