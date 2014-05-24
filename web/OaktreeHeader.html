@@ -51,7 +51,8 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="OaktreeIndex.html">${jmx.java.lang:type=Runtime.Name} Time: ${java.java.lang.System.currentTimeMillis()}</a>
+                ${define.x=java.java.lang.System.currentTimeMillis()}
+                <a class="navbar-brand" href="OaktreeIndex.html">${jmx.java.lang:type=Runtime.Name} Time: ${java.com.oaktree.core.utils.Text.renderTime(var.x)}</a>
             </div>
             <!-- /.navbar-header -->
 

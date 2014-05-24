@@ -1,5 +1,7 @@
 package com.oaktree.core.http;
 
+import com.oaktree.core.gc.GC;
+
 public class MockService {
 	public String getString() {
 		return "HELLO";

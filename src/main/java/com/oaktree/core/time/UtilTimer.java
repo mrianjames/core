@@ -1,7 +1,6 @@
-package com.oaktree.core.utils;
+package com.oaktree.core.time;
 
-import com.oaktree.core.time.ITime;
-import com.oaktree.core.time.JavaTime;
+import com.oaktree.core.utils.Text;
 
 import java.util.Date;
 import java.util.Timer;

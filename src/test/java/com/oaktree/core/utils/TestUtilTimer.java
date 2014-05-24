@@ -4,6 +4,9 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.oaktree.core.time.ITimer;
+import com.oaktree.core.time.UtilTimer;
+
 public class TestUtilTimer {
 
 	@Test

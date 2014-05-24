@@ -73,6 +73,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	private final static String ENV = "env";
 	private final static String TABLE_BINDING = "table_binding";
     private final static String DATA_VIEW = "data-view";
+    private final static String DEFINE = "define";    
 	private final static String SYS = "sys";
 	private final static String PARAM = "param";
     private final static String VAR = "var";
@@ -504,7 +505,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			value = System.getProperty(chunkTextToVariableName(repl));
 		} else if (repl.startsWith(DATA_VIEW)) {
             value = this.processDataViewRequest(repl,ctx);
-        } else if (repl.startsWith(TABLE_BINDING)) {
+        } else if (repl.startsWith(DEFINE)) {
+            value = this.processDefineVariable(repl,ctx);
+        }else if (repl.startsWith(TABLE_BINDING)) {
 			throw new IllegalStateException("Deprecated api. pls upgrade to "+DATA_VIEW);
 		} else if (repl.startsWith(PARAM)) {
 			value = ctx.params.get(chunkTextToVariableName(repl));
@@ -530,7 +533,17 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		return value;
 	}
 
-    private String processEnvironmentVariable(String repl, ResourceContext ctx) throws Exception {
+    private String processDefineVariable(String repl, ResourceContext ctx) throws Exception {
+		String expr = repl.substring(repl.indexOf(".",6)+1);
+		String[] bits = expr.split("=");
+		String var = bits[0];
+		String value = bits[1];
+		value = getValue(value,ctx);
+		ctx.setVar(var, value);
+		return "";
+	}
+
+	private String processEnvironmentVariable(String repl, ResourceContext ctx) throws Exception {
         String value = "";
         String e = chunkTextToVariableName(repl);
         if (e.startsWith("all")) {
@@ -543,20 +556,35 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 
     private String processJavaStaticMethod(String repl, ResourceContext ctx) throws Exception {
         String value = "";
-        //TODO args
         //${java.java.lang.System.currentTimeMillis()}
         String clazz = chunkTextToJavaClassName(repl);
         String method = chunkTextToJavaMethodName(repl);
-        Class c = Class.forName(clazz);
-        Method m = c.getMethod(method);
-        if (m != null) {
-            value = String.valueOf(m.invoke(null));
-            //TODO arrays
-        }
+        //TODO clarifications.
+        String[] args = chunkTextToJavaArgs(repl,ctx);
+        
+        Object v = executeMethodWithArgs(null,Class.forName(clazz), method, args);
+        value = String.valueOf(v);
+        //TODO arrays...
         return value;
     }
 
-    private String processJmx(String repl, ResourceContext ctx) throws Exception {
+    private String[] chunkTextToJavaArgs(String repl,ResourceContext ctx) throws Exception {
+    	repl = repl.substring(repl.lastIndexOf('(')+1,repl.lastIndexOf(')'));
+    	if (repl.length() < 1) {
+    		return new String[]{};
+    	}
+		String[] bits = repl.split("[,]");
+		String[] values = new String[bits.length];
+		int i = 0;
+		for (String bit:bits) {
+			String v = getValue(bit,ctx);
+			values[i] = v;
+			i++;
+		}
+		return values;
+	}
+
+	private String processJmx(String repl, ResourceContext ctx) throws Exception {
         String value = "";
         ObjectName mObjectName = new ObjectName( chunkTextToJmxObjectName(repl) );
         //get ze beanie.
@@ -613,25 +641,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             }
             Object o = this.services.get(service);
             if (o != null) {
-                Method m = null;
-                Object[] vars = new Object[pms.length];
-                for (Method mtd : o.getClass().getMethods()) {
-                    if (mtd.getName().equals(method)) {
-                        Class<?>[] ptypes = mtd.getParameterTypes();
-                        if (ptypes.length == pms.length) {
-                            //TODO better checking.
-                            int i = 0;
-                            for (Class<?> type : ptypes) {
-                                vars[i] = type.cast(pms[i]);
-                                i++;
-                            }
-                            m = mtd;
-                            break;
-                        }
-                    }
-                }
+                Object v = executeMethodWithArgs(o,o.getClass(),method,pms);
                 if (clarification == null) {
-                    Object v = m.invoke(o, vars);
+                    
                     //handle non castable things....like array..
                     if (v.getClass().isArray()) {
                         int sz = Array.getLength(v);
@@ -647,14 +659,14 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                         //TODO any others?
                     }
                 } else {
-                    Object obj = m.invoke(o, vars);
+                    
 
                     //TOOD complex obj; get the values into proper structure.
-                    if (obj.getClass().isArray()) {
-                        Class ofArray = obj.getClass().getComponentType();
-                        int sz = Array.getLength(obj);
+                    if (v.getClass().isArray()) {
+                        Class ofArray = v.getClass().getComponentType();
+                        int sz = Array.getLength(v);
                         for (int i = 0; i < sz; i++) {
-                            Object ch = Array.get(obj, i);
+                            Object ch = Array.get(v, i);
                             for (String c : clarification.split("[,]")) {
                                 String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
                                 Method x = ofArray.getMethod(cname);
@@ -664,8 +676,8 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                     } else {
                         for (String c : clarification.split("[,]")) {
                             String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
-                            Method x = obj.getClass().getMethod(cname);
-                            value += String.valueOf(x.invoke(obj)) + ",";
+                            Method x = v.getClass().getMethod(cname);
+                            value += String.valueOf(x.invoke(v)) + ",";
                         }
                     }
                     if (value.length() > 0) {
@@ -678,6 +690,89 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     }
 
     /**
+     * On an object, execute a method with args we have specified - we will cast as we can.
+     * THIS WILL NOT WORK IF YOU HAVE A METHOD NAME WITH SAME NUM ARGS OF DIFFERENT TYPES.
+     * @param o
+     * @param method
+     * @param pms
+     * @return
+     * @throws Exception
+     */
+    private Object executeMethodWithArgs(Object o,Class clazz,String method, String[] pms) throws Exception {
+    	Method m = null;
+        Object[] vars = new Object[pms.length];
+        for (Method mtd : clazz.getMethods()) {
+            if (mtd.getName().equals(method)) {
+                Class<?>[] ptypes = mtd.getParameterTypes();
+                if (ptypes.length == pms.length && canCastAllArgs(pms,ptypes)) {
+                    //TODO better checking.
+                    int i = 0;
+                    for (Class<?> type : ptypes) {
+                    	try {
+                    		vars[i] = type.cast(pms[i]);
+                    	} catch (Exception e) {
+                    		//try some common ops...
+                    		if (type.equals(Long.class) || type.equals(long.class)) {
+                    			vars[i] = Long.valueOf(pms[i]);
+                    		} else if (type.equals(Double.class)|| type.equals(double.class)) {
+                    			vars[i] = Double.valueOf(pms[i]);
+                    		} else if (type.equals(Integer.class)|| type.equals(int.class)) {
+                    			vars[i] = Integer.valueOf(pms[i]);
+                    		} else if (type.equals(Short.class)|| type.equals(short.class)) {
+                    			vars[i] = Short.valueOf(pms[i]);
+                    		} else if (type.equals(Float.class)|| type.equals(float.class)) {
+                    			vars[i] = Float.valueOf(pms[i]);
+                    		} else if (type.equals(Boolean.class)|| type.equals(boolean.class)) {
+                    			vars[i] = Boolean.valueOf(pms[i]);
+                    		}
+                    	}
+                    	
+                        i++;
+                    }
+                    m = mtd;
+                    break;
+                }
+            }
+        }
+        if (o != null) {
+        	return m.invoke(o, vars);
+        } else {
+        	return m.invoke(null, vars);
+        }
+	}
+
+	private boolean canCastAllArgs(String[] pms, Class<?>[] ptypes) {
+		//TODO better checking.
+        int i = 0;
+        for (Class<?> type : ptypes) {
+        	Object var = null;
+        	try {
+        		var = type.cast(pms[i]);
+        	} catch (Exception e) {
+        		//try some common ops...
+        		if (type.equals(Long.class) || type.equals(long.class)) {
+        			var = Long.valueOf(pms[i]);
+        		} else if (type.equals(Double.class)|| type.equals(double.class)) {
+        			var = Double.valueOf(pms[i]);
+        		} else if (type.equals(Integer.class)|| type.equals(int.class)) {
+        			var = Integer.valueOf(pms[i]);
+        		} else if (type.equals(Short.class)|| type.equals(short.class)) {
+        			var = Short.valueOf(pms[i]);
+        		} else if (type.equals(Float.class)|| type.equals(float.class)) {
+        			var = Float.valueOf(pms[i]);
+        		} else if (type.equals(Boolean.class)|| type.equals(boolean.class)) {
+        			var = Boolean.valueOf(pms[i]);
+        		} else {
+        			return false;
+        		}
+        	}
+        	
+            i++;
+        }
+        return true;
+	}
+
+	/**
      * Process the following format:
      * ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
      *
@@ -848,12 +943,14 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	}
 
 	private String chunkTextToJavaMethodName(String repl) {
-		String str = repl.substring(repl.lastIndexOf('.')+1,repl.lastIndexOf('('));
+		repl = repl.substring(0,repl.indexOf("("));
+		String str = repl.substring(repl.lastIndexOf('.')+1);
 		return str;
 	}
 
 	//${java.java.lang.System.currentTimeMillis()}
 	private String chunkTextToJavaClassName(String repl) {
+		repl = repl.substring(0,repl.indexOf("("));
 		String str = repl.substring(repl.indexOf('.')+1, repl.lastIndexOf('.'));
 		return str;
 	}

@@ -4,7 +4,10 @@ import com.oaktree.core.container.AbstractComponent;
 import com.oaktree.core.container.ComponentState;
 import com.oaktree.core.container.ComponentType;
 import com.oaktree.core.threading.dispatcher.IDispatcher;
+import com.oaktree.core.time.ITime;
 import com.oaktree.core.time.ITimeScheduler;
+import com.oaktree.core.time.JavaTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +41,9 @@ public class DispatcherMonitor extends AbstractComponent implements Runnable{
     @Override
     public void start() {
         super.start();
-        logger.info("Staritng " + getName() + " with interval " + interval + " on dispatcher " + dispatcher.getName());
+        if (logger.isInfoEnabled()) {
+        	logger.info("Staritng " + getName() + " with interval " + interval + " on dispatcher " + dispatcher.getName());
+        }
         this.apptmt = this.scheduler.schedule(getName(), interval, interval, this);
         this.setState(ComponentState.AVAILABLE);
     }
@@ -75,49 +80,50 @@ public class DispatcherMonitor extends AbstractComponent implements Runnable{
                 warn+=1;
             }
         }
-
-        StringBuilder builder = new StringBuilder(500);
-        builder.append("DispatcherStats[");
-        builder.append(dispatcher.getName());
-        builder.append("] Keys:");
-        builder.append(keys.length);
-        builder.append(", ");
-        builder.append(keyIncrease > 0 ? "+" : "");
-        builder.append(keyIncrease);
-        builder.append(" rt: ");
-        builder.append(keyIncreaseRate);
-        builder.append("p/s qd:");
-        builder.append(totalQueuedCount);
-        builder.append(totalQueuedIncrease > 0 ? " +" : "");
-        builder.append(totalQueuedIncrease);
-        builder.append(" rt: ");
-        builder.append(queuedIncreaseRate);
-        builder.append("p/s exec:");
-        builder.append(totalExecCount);
-        builder.append(totalExecIncrease > 0 ? " +" : "");
-        builder.append(totalExecIncrease);
-        builder.append(" rt: ");
-        builder.append(execIncreaseRate);
-        builder.append("p/s topQ: ");
-        builder.append(topQueued);
-        builder.append("[");
-        builder.append(maxQueued);
-        builder.append("]");
-        builder.append(" topEx: ");
-        builder.append(topExec);
-        builder.append("[");
-        builder.append(maxExec);
-        builder.append("]");
-        builder.append(" #>warn: ");
-        builder.append(warn);
-        
-        logger.info(builder.toString());
+        if (logger.isInfoEnabled()) {
+	        StringBuilder builder = new StringBuilder(500);
+	        builder.append("DispatcherStats[");
+	        builder.append(dispatcher.getName());
+	        builder.append("] Keys:");
+	        builder.append(keys.length);
+	        builder.append(", ");
+	        builder.append(keyIncrease > 0 ? "+" : "");
+	        builder.append(keyIncrease);
+	        builder.append(" rt: ");
+	        builder.append(keyIncreaseRate);
+	        builder.append("p/s qd:");
+	        builder.append(totalQueuedCount);
+	        builder.append(totalQueuedIncrease > 0 ? " +" : "");
+	        builder.append(totalQueuedIncrease);
+	        builder.append(" rt: ");
+	        builder.append(queuedIncreaseRate);
+	        builder.append("p/s exec:");
+	        builder.append(totalExecCount);
+	        builder.append(totalExecIncrease > 0 ? " +" : "");
+	        builder.append(totalExecIncrease);
+	        builder.append(" rt: ");
+	        builder.append(execIncreaseRate);
+	        builder.append("p/s topQ: ");
+	        builder.append(topQueued);
+	        builder.append("[");
+	        builder.append(maxQueued);
+	        builder.append("]");
+	        builder.append(" topEx: ");
+	        builder.append(topExec);
+	        builder.append("[");
+	        builder.append(maxExec);
+	        builder.append("]");
+	        builder.append(" #>warn: ");
+	        builder.append(warn);
+	        
+	        logger.info(builder.toString());
+        }
         prevKeyCount = keys.length;
         prevExecCount = totalExecCount;
         prevQueuedCount = totalQueuedCount;
         
         if (dispatchListener != null) {
-        	DispatchSnapshot snapshot = new DispatchSnapshot(System.currentTimeMillis(),totalExecCount,
+        	DispatchSnapshot snapshot = new DispatchSnapshot(timeSource.getTimeOfDay(),totalExecCount,
         			totalQueuedCount,totalQueuedIncrease,totalExecIncrease,keyIncrease,keyIncreaseRate,
         			queuedIncreaseRate,execIncreaseRate,
         			topExec,topQueued);
@@ -132,6 +138,7 @@ public class DispatcherMonitor extends AbstractComponent implements Runnable{
     private int prevKeyCount = 0;
     private long prevQueuedCount = 0;
     private long prevExecCount = 0;
+    private ITime timeSource = new JavaTime();
 
     public void stop() {
         this.setState(ComponentState.STOPPING);
