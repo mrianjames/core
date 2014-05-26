@@ -876,7 +876,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                 if (keyFormatter != null) {
                     vs[0][i] = String.valueOf(keyFormatter.parse(values[pos]).getTime() + Text.getToday());
                 } else {
-                    vs[0][i] = String.valueOf(row);
+                    vs[0][i] = String.valueOf(values[pos]);
                 }
                 for (int j = 1; j < cols; j++) {
                     vs[j][i] = values[pos + j];
