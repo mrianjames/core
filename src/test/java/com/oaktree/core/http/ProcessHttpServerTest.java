@@ -1,5 +1,15 @@
 package com.oaktree.core.http;
 
+import java.util.concurrent.locks.LockSupport;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.oaktree.core.gc.GCService;
+import com.oaktree.core.gc.MockGCService;
+import com.oaktree.core.logging.ILogger;
+import com.oaktree.core.logging.Level;
+import com.oaktree.core.logging.LowLatencyLogger;
 import com.oaktree.core.process.MemoryService;
 import com.oaktree.core.threading.dispatcher.Monitoring.DispatcherMonitor;
 import com.oaktree.core.threading.dispatcher.Monitoring.DispatcherService;
@@ -7,7 +17,7 @@ import com.oaktree.core.threading.dispatcher.throughput.ThroughputDispatcher;
 import com.oaktree.core.time.MultiTimeScheduler;
 
 public class ProcessHttpServerTest {
-	   
+	private static final Logger logger = LoggerFactory.getLogger(ProcessHttpServerTest.class);
 	public static void main(String[] args) {
 		ThroughputDispatcher dispatcher = new ThroughputDispatcher("TEST",2);
 		dispatcher.initialise();dispatcher.start();
@@ -22,11 +32,21 @@ public class ProcessHttpServerTest {
 		ms.initialise();
 		ms.start();
 		
-		MockService s = new MockService();
+		GCService s = new GCService("gc.service");
+		s.initialise();s.start();
 		ProcessHttpServer server = new ProcessHttpServer(1234);
-		server.addService("service", s);
+		server.addService("gc", s);
 		server.addService("memory",ms);
 		server.addService("dispatcher",dispservice);
 		server.start();
+		
+		((LowLatencyLogger)logger).setLevel(Level.OFF);
+		int i = 0;
+        while (true) {
+        	logger.info("Making random garbage..."+i);
+            i++;
+            LockSupport.parkNanos(1000);
+        }
+		
 	}
 }

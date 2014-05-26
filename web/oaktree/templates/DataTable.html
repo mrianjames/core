@@ -7,7 +7,18 @@
 	</table>
 </div>
 <script>
+
+            
 	$(document).ready(function() {
-		$('#table_${table_id}').dataTable();
+		$('#table_${table_id}').dataTable({
+			"columnDefs": [
+			{
+				"render": function ( data, type, row ) {
+                    return format(data);
+                }
+                <!--,                "targets": "_all" -->
+			}
+			]
+		});
 	})
  </script>

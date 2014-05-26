@@ -1,56 +1,58 @@
 ${import=OaktreeHeader.html}
 
-        <div id="page-wrapper">
-            <div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header">GC ${service.getString()}</h1>
+<div id="page-wrapper">
+    <div class="row"/>
+    <br/>
+    <div class="panel-heading">
+        Garbage Collection
+    </div>
+    <!-- .panel-heading -->
+    <div class="panel-body">
+        <div class="panel-group" id="accordion">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">GC</a>
+                    </h4>
                 </div>
-                <!-- /.col-lg-12 -->
-            </div>
-            <!-- /.row -->
-            <div class="row">
-                <div class="col-lg-8">
+                <div id="collapseOne" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="panel-body">
+                            <ul class="nav nav-tabs">
+                                <!--<li class="active"><a href="#queuedchart" data-toggle="tab">Queued Chart</a></li>-->
+                                <!--<li><a href="#execchart" data-toggle="tab">Exec Chart</a></li>-->
+                                <li><a href="#gcdata" data-toggle="tab">GC Data</a></li>
+                            </ul>
 
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <i class="fa fa-bar-chart-o fa-fw"></i> GC Events.
-                            <div class="pull-right">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                        Actions
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu pull-right" role="menu">
-                                        <li><a href="#">Refresh</a>
-                                        </li>
-                                        
-                                    </ul>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <!--<div class="tab-pane fade in active" id="queuedchart">
+                                    <div class="panel-body">
+                                        ${data-view type="line_chart" options="" title="QueuedCount" source="service.dispatcher.getSnapshots()" source-fields="totalQueuedCount" key-field="timestamp"}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade in" id="execchart">
+                                    <div class="panel-body">
+                                        ${data-view type="line_chart" options="" title="ExecCount" source="service.dispatcher.getSnapshots()" source-fields="totalExecCount" key-field="timestamp"}
+                                    </div>
+                                </div> -->
+                                <div class="tab-pane fade" id="gcdata">
+                                    <div class="panel-body">
+                                        ${data-view type="paginated_table" options="" title="GC" source="service.gc.getAllGCEvents()" source-fields="startTime(Time),name(Event),cause(Cause),action(Action),memoryArea(memArea),duration(Duration),beforeUsedSizeK(BeforeKb),afterUsedSizeK(AfterKb),collectionSizeK(CollectedKb)"}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- /.panel-heading -->
-                        <div class="panel-body">
-                            <div class="row">
-                                <div class="col-lg-4">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-hover table-striped">
-                                        ${table_binding=[Time,Type,Before,After][service.getGCData():time,type,before,after]}
-                                        
-                                        </table>
-                                    </div>
-                                    <!-- /.table-responsive -->
-                                </div>                                
-                            </div>
-                            <!-- /.row -->
-                        </div>
-                        <!-- /.panel-body -->
                     </div>
-                    
+                </div>
 
-                        
-                <!-- /.col-lg-4 -->
             </div>
-            <!-- /.row -->
         </div>
-        <!-- /#page-wrapper -->
+
+
+    </div>
+
+</div>
+
+
 ${import=OaktreeTail.html}

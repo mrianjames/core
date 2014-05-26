@@ -673,6 +673,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                                 value += String.valueOf(x.invoke(ch)) + ",";
                             }
                         }
+                       //TODO collections.
                     } else {
                         for (String c : clarification.split("[,]")) {
                             String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
