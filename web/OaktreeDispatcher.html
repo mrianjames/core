@@ -1,19 +1,58 @@
 ${import=OaktreeHeader.html}
 
-        <div id="page-wrapper">
-        	<div class="row"/>
-        	<br/>
-        	${table_binding=(Dispatcher)[Time,TotalExecCnt,TotalQueuedCount][dispatcher.getSnapshots():timestamp,totalExecCount,totalQueuedCount]}
-            
-        </div>
-        <!-- /#page-wrapper -->
-        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
-       
-    
-${import=OaktreeTail.html}
-<script>
-    $(document).ready(function() {
-        $('#table_Dispatcher').dataTable();
-    });
+<div id="page-wrapper">
+    <div class="row"/>
+    <br/>
+    <div class="panel-heading">
+        Dispatcher Statistics
+    </div>
+    <!-- .panel-heading -->
+    <div class="panel-body">
+        <div class="panel-group" id="accordion">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Dispatcher</a>
+                    </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="panel-body">
+                            <ul class="nav nav-tabs">
+                                <li class="active"><a href="#queuedchart" data-toggle="tab">Queued Chart</a></li>
+                                <li><a href="#execchart" data-toggle="tab">Exec Chart</a></li>
+                                <li><a href="#dispatcherdata" data-toggle="tab">Dispatcher Data</a></li>
+                            </ul>
 
-</script>
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <div class="tab-pane fade in active" id="queuedchart">
+                                    <div class="panel-body">
+                                        ${data-view type="line_chart" options="" title="QueuedCount" source="service.dispatcher.getSnapshots()" source-fields="totalQueuedCount" key-field="timestamp"}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade in" id="execchart">
+                                    <div class="panel-body">
+                                        ${data-view type="line_chart" options="" title="ExecCount" source="service.dispatcher.getSnapshots()" source-fields="totalExecCount" key-field="timestamp"}
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="dispatcherdata">
+                                    <div class="panel-body">
+                                        ${data-view type="paginated_table" options="" title="Dispatcher" source="service.dispatcher.getSnapshots()" source-fields="timestamp(Time),totalExecCount(TotExec),totalQueuedCount(TotQueue),execIncreaseRate(ExecIncRate),queuedIncreaseRate(QueuedIncRate),keyIncreaseRate(KeyIncRate)"}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+
+</div>
+
+
+${import=OaktreeTail.html}

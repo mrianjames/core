@@ -1,6 +1,6 @@
 package com.oaktree.core.http;
 
-import com.oaktree.core.gc.GC;
+import com.oaktree.core.gc.GCEvent;
 
 public class MockService {
 	public String getString() {
@@ -13,13 +13,13 @@ public class MockService {
 		return new String[]{"A","B","C"};
 	}
 	
-	public GC[] getGCData() {
-		return new GC[]{
-				new GC(System.currentTimeMillis(),"ParNew",1123232332,12312312),
-				new GC(System.currentTimeMillis(),"ParNew",1123232332,12312312),
-				new GC(System.currentTimeMillis(),"ParNew",1123232332,12312312),
-				new GC(System.currentTimeMillis(),"ParNew",1123232332,12312312),
-				new GC(System.currentTimeMillis(),"ParNew",1123232332,12312312)
+	public GCEvent[] getGCData() {
+		return new GCEvent[]{
+				new GCEvent("Eden",System.currentTimeMillis(),System.currentTimeMillis()+1,"ParNew","","",1123232332,12312312),
+				new GCEvent("Freden",System.currentTimeMillis(),System.currentTimeMillis()+1,"ParNew","","",1123232332,12312312),
+				new GCEvent("gEden",System.currentTimeMillis(),System.currentTimeMillis()+1,"ParNew","","",1123232332,12312312),
+				new GCEvent("hEden",System.currentTimeMillis(),System.currentTimeMillis()+1,"ParNew","","",1123232332,12312312),
+				new GCEvent("aEden",System.currentTimeMillis(),System.currentTimeMillis()+1,"ParNew","","",1123232332,12312312)
 				};
 	}
 }
