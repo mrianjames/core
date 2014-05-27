@@ -1,5 +1,8 @@
 package com.oaktree.core.gc;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import com.oaktree.core.utils.Text;
 
 //name is ParNew
@@ -9,23 +12,22 @@ public class GCEvent {
     private long stime;
     private long etime;
 	private String name;
-	private long before;
-	private long after;
-    private String memoryArea;
-
-	public GCEvent(String memoryArea,long stime, long etime, String name,String action, String cause, long before, long after) {
-        this.memoryArea = memoryArea;
-		this.stime = stime;
+	private String type;
+	
+	public GCEvent(long stime, long etime, String type,String name,String action, String cause) {
+    	this.stime = stime;
         this.etime = etime;
 		this.name = name;
-		this.before = before;
-		this.after = after;
-        this.cause = cause;
+		this.cause = cause;
         this.action = action;
+        this.type = type;
 	}
 
 	public long getStartTime() {
 		return stime;
+	}
+	public String getStartTimeAsString() {
+		return Text.renderTime(stime);
 	}
     public long getEndTime() { return etime; }
 
@@ -34,43 +36,56 @@ public class GCEvent {
 	}
 
 
-	public long getBefore() {
-		return before;
-	}
-
-	public void setBefore(long before) {
-		this.before = before;
-	}
-
-	public long getAfter() {
-		return after;
-	}
-
-	public void setAfter(long after) {
-		this.after = after;
-	}
+	
 
     public String getCause() { return this.cause; }
 
     public String getAction() { return this.action; }
 
-    public String getMemoryArea() { return this.memoryArea; }
-
+    
     public long getDuration() { return this.etime - this.stime; }
 
-    public long getCollectionSizeBytes() { return after - before; }
-
-    public double getCollectionSizeK() { return getCollectionSizeBytes()/1024d;}
-
-    public double getCollectionSizeMB() { return getCollectionSizeK()/1024d; }
-
-    public double getAfterUsedSizeK() { return (double)after/1024d; }
-    public double getBeforeUsedSizeK() { return (double)before/1024d; }
-    public double getAfterUsedSizeMB() { return getAfterUsedSizeK()/1024d; }
-    public double getBeforeUsedSizeMB() { return getBeforeUsedSizeK()/1024d; }
-
+    private Collection<GCMemoryArea> gcMemoryAreas = new ArrayList<GCMemoryArea>();
+    public void addMemoryArea(String areaName, GCEvent event, long wasCommitted, long isCommitted, long wasUsed, long isUsed) {
+    	gcMemoryAreas.add(new GCMemoryArea(areaName, event, wasCommitted, isCommitted, wasUsed, isUsed));
+    }
+    
+    public boolean isG1Action() {
+    	return GCService.G1.equals(this.type); 
+    }
+    public boolean isYoungAction() {
+    	return GCService.YOUNG.equals(this.type);  
+    }
+    public boolean isOldAction() {
+    	return GCService.OLD.equals(this.type);  
+    }
     @Override
     public String toString() {
-        return memoryArea+ " " +Text.renderTime(stime/1000) + " " +name + " " + action + " "+ cause + " duration:" + (etime-stime) + "us "+getCollectionSizeK() + "K was "+getBeforeUsedSizeK()+ "K now: " + (getAfterUsedSizeK())+"K";
+    	
+        return Text.renderTime(stime/1000) + " " +name + " ("+type+")" + action + " "+ cause + " duration:" + (etime-stime) + "us. " + getDescription().toString();
+    }
+    public String getDescription() {
+    	StringBuilder memareas = new StringBuilder();
+    	for (GCMemoryArea area:gcMemoryAreas) {
+    		memareas.append(Text.LEFT_SQUARE_BRACKET);
+    		memareas.append(area.toString());
+    		memareas.append(Text.RIGHT_SQUARE_BRACKET);
+    	}
+    	return memareas.toString();
+    }
+    
+    public long getRemovedB() {
+    	long cleared = 0;
+    	for (GCMemoryArea area:gcMemoryAreas) {
+    		cleared += area.getUsedChangeB();
+    	}
+    	return cleared;
+    }
+    
+    public long getRemovedK() {
+    	return getRemovedB()/1024;
+    }
+    public long getRemovedM() {
+    	return getRemovedK()/1024;
     }
 }

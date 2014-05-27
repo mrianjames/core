@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.oaktree.core.gc.GCService;
-import com.oaktree.core.gc.MockGCService;
 import com.oaktree.core.logging.ILogger;
 import com.oaktree.core.logging.Level;
 import com.oaktree.core.logging.LowLatencyLogger;

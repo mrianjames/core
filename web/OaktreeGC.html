@@ -19,26 +19,14 @@ ${import=OaktreeHeader.html}
                     <div class="panel-body">
                         <div class="panel-body">
                             <ul class="nav nav-tabs">
-                                <!--<li class="active"><a href="#queuedchart" data-toggle="tab">Queued Chart</a></li>-->
-                                <!--<li><a href="#execchart" data-toggle="tab">Exec Chart</a></li>-->
-                                <li><a href="#gcdata" data-toggle="tab">GC Data</a></li>
+                                <li class="active"><a href="#gcdata" data-toggle="tab">GC Data</a></li>
                             </ul>
 
                             <!-- Tab panes -->
                             <div class="tab-content">
-                                <!--<div class="tab-pane fade in active" id="queuedchart">
+                                <div class="tab-pane fade in active" id="gcdata">
                                     <div class="panel-body">
-                                        ${data-view type="line_chart" options="" title="QueuedCount" source="service.dispatcher.getSnapshots()" source-fields="totalQueuedCount" key-field="timestamp"}
-                                    </div>
-                                </div>
-                                <div class="tab-pane fade in" id="execchart">
-                                    <div class="panel-body">
-                                        ${data-view type="line_chart" options="" title="ExecCount" source="service.dispatcher.getSnapshots()" source-fields="totalExecCount" key-field="timestamp"}
-                                    </div>
-                                </div> -->
-                                <div class="tab-pane fade" id="gcdata">
-                                    <div class="panel-body">
-                                        ${data-view type="paginated_table" options="" title="GC" source="service.gc.getAllGCEvents()" source-fields="startTime(Time),name(Event),cause(Cause),action(Action),memoryArea(memArea),duration(Duration),beforeUsedSizeK(BeforeKb),afterUsedSizeK(AfterKb),collectionSizeK(CollectedKb)"}
+                                        ${data-view type="paginated_table" options="" title="GC" source="service.gc.getAllGCEvents()" source-fields="startTimeAsString(Time),name(Event),cause(Cause),action(Action),duration(Duration),removedK(RemovedKB),description(Details)"}
                                     </div>
                                 </div>
                             </div>
