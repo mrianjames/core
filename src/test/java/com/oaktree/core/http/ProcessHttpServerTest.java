@@ -24,7 +24,7 @@ public class ProcessHttpServerTest {
 		MultiTimeScheduler scheduler = new MultiTimeScheduler(dispatcher);
 		scheduler.initialise();scheduler.start();
 		DispatcherService dispservice = new DispatcherService("dispService");
-		DispatcherMonitor dispmon = new DispatcherMonitor("DW", dispatcher, scheduler, 5000);
+		DispatcherMonitor dispmon = new DispatcherMonitor("DW", dispatcher, scheduler, 60000);
 		dispmon.setDispatchListener(dispservice);
 		dispmon.initialise();dispmon.start();
 		MemoryService ms = new MemoryService(5000);

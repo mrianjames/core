@@ -28,12 +28,12 @@ ${import=OaktreeHeader.html}
                             <div class="tab-content">
                                 <div class="tab-pane fade in active" id="queuedchart">
                                     <div class="panel-body">
-                                        ${data-view type="line_chart" options="" title="QueuedCount" source="service.dispatcher.getSnapshots()" source-fields="totalQueuedCount" key-field="timestamp"}
+                                        ${data-view type="line_chart" options="" title="QueuedCount" source="service.dispatcher.getSnapshots()" source-fields="totalQueuedIncrease" key-field="timestamp"}
                                     </div>
                                 </div>
                                 <div class="tab-pane fade in" id="execchart">
                                     <div class="panel-body">
-                                        ${data-view type="line_chart" options="" title="ExecCount" source="service.dispatcher.getSnapshots()" source-fields="totalExecCount" key-field="timestamp"}
+                                        ${data-view type="line_chart" options="" title="ExecCount" source="service.dispatcher.getSnapshots()" source-fields="totalExecIncrease" key-field="timestamp"}
                                     </div>
                                 </div>
                                 <div class="tab-pane fade" id="dispatcherdata">

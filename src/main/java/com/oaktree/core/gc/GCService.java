@@ -13,6 +13,8 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 
+import com.oaktree.core.pool.IPool;
+import com.oaktree.core.pool.SimplePool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +25,16 @@ import com.sun.management.GarbageCollectionNotificationInfo;
 
 /**
  * This class receives GC update events (JDK 7 onwards) and stores them
- * for later use by other components. 
- * 
+ * for later use by other components. It will also provide summary analysis of what
+ * gc has occured
+ *
+ * GC Throughput
+ *
+ * -verbose:gc -Xloggc:gc.log -XX:+PrintGCDetails
+ *
+ * -XX:+UseParNewGC
+ * -XX:+UseConcMarkSweepGC
+ *
  * @author ij
  *
  */
@@ -37,8 +47,8 @@ public class GCService extends AbstractComponent implements IGCService {
 		this.setComponentType(ComponentType.SERVICE);
 		this.setComponentSubType("GCService");
 	}
-	
-	private List<GCEvent> allEvents = new CopyOnWriteArrayList<GCEvent>();
+
+    private List<GCEvent> allEvents = new CopyOnWriteArrayList<GCEvent>();
 	private long startTime;
 	@Override
 	public void start() {

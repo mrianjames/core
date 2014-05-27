@@ -10,7 +10,7 @@
 		$(function() {
 		    xformatter = function(val, axis){
 		    	var num = Number(val);
-		    	val = parseInt(num / 1024/1024);
+		    	val = parseInt(num);
 			    val += '';
 	            x = val.split('.');
 	            x1 = x[0];
@@ -29,7 +29,7 @@
 		            
 		        },
 		        series: {
-                     lines: { show: true },
+                     lines: { show: false },
                      points: { show: false }
                 },
 		        crosshair: {
@@ -51,6 +51,7 @@
                     //max: 350000000,
                     tickFormatter: xformatter
                 }
+                ,bars: { show: true }
 		    };
 	    
 			var d1 = [${chart_data1}];
