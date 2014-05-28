@@ -391,11 +391,23 @@
 
                                         <script type="text/javascript">
                                         $(function() {
+                                        	var options = {            
+										            grid: {
+										                backgroundColor: { colors: ["#B0D5FF", "#5CA8FF"] }
+										            },
+										            xaxis: {
+										                mode: "time",
+										                timeformat: "%H:%M"
+										            }
+										        };
                                             var d1 = [];
-                                            for (var i = 0; i < 14; i += 0.5) {
-                                                d1.push([i, Math.sin(i)]);
-                                            }
-                                            $.plot("#charty", [ d1] );
+                                                var start = 1401279943559;
+ 
+										    for(i=1;i<=50;i++){                
+										        d1.push([start, i * Math.cos(i)]);
+										        start+= 100000
+										    }
+                                            $.plot("#charty", [ d1], options );
                                         });
 
                                     </script>

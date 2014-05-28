@@ -1,5 +1,7 @@
 package com.oaktree.core.threading.dispatcher.Monitoring;
 
+import com.oaktree.core.logging.Text;
+
 public class DispatchSnapshot {
 	public DispatchSnapshot(long timestamp, long totalExecCount, long totalQueuedCount, long totalQueuedIncrease,
 			long totalExecIncrease, int keyIncrease, double keyIncreaseRate, double queuedIncreaseRate, double execIncreaseRate,
@@ -30,6 +32,9 @@ public class DispatchSnapshot {
 	private String topQueued;
 	public long getTimestamp() {
 		return timestamp;
+	}
+	public String getTimestampAsString() {
+		return Text.renderTime(timestamp);
 	}
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;

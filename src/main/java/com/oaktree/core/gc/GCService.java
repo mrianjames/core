@@ -110,7 +110,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	                        Map<String, MemoryUsage> mem = info.getGcInfo().getMemoryUsageAfterGc();
 	                        double totCollection;
 	                        GCEvent gc = new GCEvent( startTime + info.getGcInfo().getStartTime(), startTime + info.getGcInfo().getEndTime(),gctype, info.getGcName(), info.getGcAction(), info.getGcCause());
-                            allEvents.add(gc);
+                            
 
                             //System.out.print(name + (memCommitted==memMax?"(fully expanded)":"(still expandable)") +"used: "+(beforepercent/10)+"."+(beforepercent%10)+"%->"+(percent/10)+"."+(percent%10)+"%("+((memUsed/1048576)+1)+"MB) / ");
                             
@@ -156,6 +156,9 @@ public class GCService extends AbstractComponent implements IGCService {
 		return gctypes.toArray(new String[gctypes.size()]);
 	}
 	private void addGcEvent(GCEvent event) {
+		if (event.getRemovedB() == 0) {
+			return;
+		}
 		this.allEvents.add(event);
 		this.cumulativeGCTime.addAndGet(event.getDuration());
 		if (logger.isInfoEnabled()) {

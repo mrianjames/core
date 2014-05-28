@@ -19,6 +19,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -107,10 +113,14 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                 b.append("],");
             }
             String datastr = b.toString();
-            String data = datastr.substring(0, datastr.length() - 1);
+            if (datastr.length() > 0){
+	            String data = datastr.substring(0, datastr.length() - 1);
+	
+	            jsDataSets.add(data);
 
-            jsDataSets.add(data);
-
+            } else {
+            	jsDataSets.add("[]");
+            }
         }
         return makeLineChartCode(chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);
     }
@@ -670,7 +680,11 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                             for (String c : clarification.split("[,]")) {
                                 String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
                                 Method x = ofArray.getMethod(cname);
-                                value += String.valueOf(x.invoke(ch)) + ",";
+                                if (x.getReturnType().equals(double.class) || x.getReturnType().equals(float.class)) {
+                                	value += Text.to4Dp((double)x.invoke(ch))+",";
+                                } else {
+                                	value += String.valueOf(x.invoke(ch)) + ",";
+                                }
                             }
                         }
                        //TODO collections.
@@ -860,6 +874,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             //columns.add(field.substring(br+1,field.length()-1));
         }
         String[] values = getValue(source+":"+sourceFields,ctx).split(","); //this should get us all our cols in a flat format. we dont want flat...
+        if (values.length == 1 && values[0].equals("")) {
+        	values = new String[]{};
+        }
         //TODO fields.
         int sets = cols;
         int dataSetSize = values.length/(sets);
@@ -1221,10 +1238,21 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	@Override
 	public void start() {
 		try {
-
+			ThreadFactory tf = new ThreadFactory() {
+				private AtomicInteger id = new AtomicInteger(0);
+				@Override
+				public Thread newThread(Runnable r) {
+					Thread pt = new Thread(r);
+					pt.setName("HttpThread"+id.getAndIncrement());
+					pt.setPriority(Thread.MIN_PRIORITY); //so we dont impact much.
+					return pt;
+				}};
+				ThreadPoolExecutor exec = new ThreadPoolExecutor(1, 3, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),tf);
+			exec.prestartAllCoreThreads();
 			HttpServer server = HttpServer.create(new InetSocketAddress(port),0);
+			
 			server.createContext("/",this);
-			server.setExecutor(null);
+			server.setExecutor(exec);
 			server.start();
 
 			// load stuff

@@ -24,10 +24,10 @@ public class GCEvent {
 	}
 
 	public long getStartTime() {
-		return stime;
+		return stime/1000;
 	}
 	public String getStartTimeAsString() {
-		return Text.renderTime(stime);
+		return Text.renderTime(stime/1000);
 	}
     public long getEndTime() { return etime; }
 
@@ -79,7 +79,7 @@ public class GCEvent {
     	for (GCMemoryArea area:gcMemoryAreas) {
     		cleared += area.getUsedChangeB();
     	}
-    	return cleared;
+    	return -cleared;
     }
     
     public long getRemovedK() {
