@@ -55,7 +55,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	}
 
     private List<GCEvent> allEvents = new CopyOnWriteArrayList<GCEvent>();
-	private long startTime;
+	private long startTime = System.currentTimeMillis();
 	//total gc duration in us.
 	private AtomicLong cumulativeGCTime = new AtomicLong(0);
 	@Override
@@ -67,8 +67,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	
 	private void registerForJmxUpdates() {
 		checkJavaVersionSupportsJmxUpdates();
-		this.startTime = System.currentTimeMillis()*1000;
-        super.start();
+	    super.start();
         //get all the GarbageCollectorMXBeans - there's one for each heap generation
         //so probably two - the old generation and young generation
         List<GarbageCollectorMXBean> gcbeans = java.lang.management.ManagementFactory.getGarbageCollectorMXBeans();

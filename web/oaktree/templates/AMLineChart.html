@@ -1,0 +1,126 @@
+
+    <!-- amCharts javascript sources -->
+    <script type="text/javascript" src="http://cdn.amcharts.com/lib/3/amcharts.js"></script>
+    <script type="text/javascript" src="http://cdn.amcharts.com/lib/3/serial.js"></script>
+
+
+    <!-- amCharts javascript code -->
+    <script type="text/javascript">
+			var chart = AmCharts.makeChart("chartdiv",
+				{
+					"type": "serial",
+					"pathToImages": "http://cdn.amcharts.com/lib/3/images/",
+					"categoryField": "date",
+					"dataDateFormat": "HH:NN:SS.fff",
+					"plotAreaBorderColor": "#BCB3B3",
+					"plotAreaFillAlphas": 0.11,
+					"plotAreaFillColors": "#A9D1F6",
+					"borderColor": "#BCB3B3",
+					"color": "#1D4183",
+					"fontSize": 10,
+					"categoryAxis": {
+						"minPeriod": "ss",
+						"parseDates": true,
+						"title": "Time"
+					},
+					"chartCursor": {
+						"categoryBalloonDateFormat": "JJ:NN:SS"
+					},
+					"chartScrollbar": {
+						"backgroundAlpha": 0.88,
+						"backgroundColor": "#FFFFFF",
+						"dragIconHeight": 45,
+						"dragIconWidth": 10,
+						"graphFillColor": "#FFFFFF",
+						"graphLineColor": "#FFFFFF",
+						"selectedBackgroundAlpha": 0.34,
+						"selectedBackgroundColor": "#A9D1F6",
+						"selectedGraphFillColor": "#FFFFFF",
+						"selectedGraphLineColor": "#A9D1F6"
+					},
+					"trendLines": [],
+					"graphs": [
+						{
+							"bullet": "round",
+							"bulletSize": 4,
+							"id": "AmGraph-1",
+							"title": "Used",
+							"valueField": "Used"
+						},
+						{
+							"bullet": "square",
+							"bulletOffset": -3,
+							"bulletSize": 4,
+							"id": "AmGraph-2",
+							"title": "Committed",
+							"valueField": "Committed"
+						}
+					],
+					"guides": [],
+					"valueAxes": [
+						{
+							"id": "ValueAxis-1",
+							"title": "Size (MB)"
+						}
+					],
+					"allLabels": [],
+					"balloon": {},
+					"legend": {
+						"maxColumns": -10,
+						"useGraphSettings": true
+					},
+					"titles": [
+						{
+							"id": "Title-1",
+							"size": 15,
+							"text": "Java Heap"
+						}
+					],
+					"dataProvider": [
+						{
+							"date": "07:57:57.567",
+							"Used": "8.4",
+							"Committed": 5
+						},
+						{
+							"date": "07:57:58.567",
+							"Used": 6,
+							"Committed": 7
+						},
+						{
+							"date": "07:57:59.456",
+							"Used": "2.1",
+							"Committed": 3
+						},
+						{
+							"date": "07:58:00.345",
+							"Used": 1,
+							"Committed": 3
+						},
+						{
+							"date": "07:58:06.234",
+							"Used": 2,
+							"Committed": "1.1"
+						},
+						{
+							"date": "07:58:08.234",
+							"Used": 3,
+							"Committed": 2
+						},
+						{
+							"date": "07:59:00.456",
+							"Used": 6,
+							"Committed": 8
+						}
+					]
+				}
+			);
+			$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                  e.target // activated tab
+                  e.relatedTarget // previous tab
+                  chart.invalidateSize();
+                });
+
+		</script>
+
+    <div id="chartdiv" style="width: 100%; height: 400px; background-color: #FFFFFF;" ></div>

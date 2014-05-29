@@ -67,13 +67,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	private final static String TTF = "application/x-font-ttf";// or //
 	boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("jdwp") >= 0;												// "application/x-font-truetype"
 	private String root;
-	//private String tableHeader1 = "<div class=\"row\">\n<div class=\"col-lg-12\">\n<h1 class=\"page-header\">";
-	//Environment Variables
-	private String tableHeader2="<div class=\"row\">\n<div class=\"col-lg-12\">\n<div class=\"panel panel-default\">\n<div class=\"panel-heading\">";
-	//"System Variables"
-    private String tableHeader3="</div><div class=\"panel-body\"><div class=\"table-responsive\"><table class=\"table table-bordered table-hover table-striped\" id=\"";
-    private String tableHeader4="\">";
-    private String tableTail = "</table></div></div></div></div></div>";
+
 	private final static String OTF = "application/x-font-opentype";
 	private final static String EOT = "application/vnd.ms-fontobject";
 	private final static String ENV = "env";

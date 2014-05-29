@@ -1,6 +1,6 @@
 package com.oaktree.core.threading.dispatcher.Monitoring;
 
-import com.oaktree.core.logging.Text;
+import com.oaktree.core.utils.Text;
 
 public class DispatchSnapshot {
 	public DispatchSnapshot(long timestamp, long totalExecCount, long totalQueuedCount, long totalQueuedIncrease,
