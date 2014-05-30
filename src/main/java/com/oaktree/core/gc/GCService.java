@@ -55,7 +55,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	}
 
     private List<GCEvent> allEvents = new CopyOnWriteArrayList<GCEvent>();
-	private long startTime = System.currentTimeMillis();
+	private static long startTime = System.currentTimeMillis()*1000;
 	//total gc duration in us.
 	private AtomicLong cumulativeGCTime = new AtomicLong(0);
 	@Override

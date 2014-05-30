@@ -13,6 +13,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,18 +93,149 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     private static String dataViewLineChart = "line_chart";
     private static String dataViewPaginatedTable = "paginated_table";
 
+    /**
+     * ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
+     *
+     * @param repl
+     * @return
+     */
+    private String processDataViewLineChartRequest(String repl,ResourceContext ctx) throws Exception {
+        //explode the options from the line...
+        String[] options=getOption("options",repl).split("[,]");
+        String source = replaceSourceParams(getOption("source", repl), ctx);
+        String template = getOption("template", repl);
+        String keyField = getOption("key-field", repl);
+        String keyFormat = getOption("key-format", repl);
+        String yAxisName = getOption("y-axis-name",repl,"Size(M)");
+        String xAxisName = getOption("x-axis-name",repl,"Time");
+        SimpleDateFormat keyFormatter = null;
+        if (keyFormat != null) {
+            keyFormatter = new SimpleDateFormat(keyFormat);
+        }
+        
+        String title = checkAndReplaceVars(getOption("title", repl), ctx);
+        String id = checkAndReplaceVars(getOption("id", repl, title+ "LineChart") , ctx).replace(" ","");
+        String source_flds=getOption("source-fields", repl); //TODO refactor the use of this. TODO remove spaces etc.
+        String sourceFields = "";
+        int cols = 0;
+        if (keyField != null) {
+        	sourceFields += keyField+",";
+        	cols++;
+        }
+        //List<String> columns = new ArrayList<String>();
+        for (String field:source_flds.split(",")) {
+            //int br = field.indexOf("("); //TODO should ban that syntax here.
+            sourceFields += field+",";
+            cols++;
+            //columns.add(field.substring(br+1,field.length()-1));
+        }
+        String[] values = getValue(source+":"+sourceFields,ctx).split(","); //this should get us all our cols in a flat format. we dont want flat...
+        if (values.length == 1 && values[0].equals("")) {
+        	values = new String[]{};
+        }
+        
+        //return makeLineChartCode(title,id,values,template,source_flds.split(","),keyFormatter,cols);
+        String code = getAmChartData(values,sourceFields.split(","));
+        return replaceChartTemplateWithValues(title,xAxisName,yAxisName,id,new String[]{code},template,sourceFields.split(","));
+    }
+    
+    
+    /**
+     * Format is this.
+     * [
+						{
+							"date": "07:57:57.567",
+							"Used": "8.4",
+							"Committed": 5
+						},
+						{
+							"date": "07:57:58.567",
+							"Used": 6,
+							"Committed": 7
+						},						
+					]
+     * @return
+     */
+    private String getAmChartData(String[] values, String[] fieldNames) {
+    	StringBuilder b = new StringBuilder();
+    	b.append("[\n");
+    	int i = 0;
+    	int rows = values.length/fieldNames.length;
+    	int valuepos = 0;
+    	for (int row = 0;row < rows;row++) {
+    		i = 0;
+    		b.append("\t{");
+	    	for (String fieldName: fieldNames) {
+	    		b.append(" \"");
+	    		b.append(fieldName);
+	    		b.append("\": \"");
+	    		b.append(values[valuepos+i]);
+	    		b.append("\"");
+	    		if (i < fieldNames.length-1) {
+	    			b.append(", ");
+	    		}
+	    		i++;
+	    	}
+	    	b.append("\t}");
+	    	valuepos += fieldNames.length;
+    		if (valuepos < values.length) {
+    			b.append(",");
+    		}
+    		b.append("\n");
+	    	
+    	}
+    	b.append("]");
+    	return b.toString();
+    }
 
-    public String makeLineChartCode(String chartId, String[][] dataSets, String template, String[] dataSetNames) {
+    /**
+     * For FLOT. Make data into right format.
+     * @param title
+     * @param chartId
+     * @param values
+     * @param template
+     * @param dataSetNames
+     * @param keyFormatter
+     * @param cols
+     * @return
+     */
+    public String generateFlotChart(String title,String chartId, String[] values, String template, String[] dataSetNames,DateFormat keyFormatter, int cols ) {
+    	
+    	int sets = cols;
+        int dataSetSize = values.length/(sets);
+        String[][] vs = new String[sets][dataSetSize];
+        int pos = 0;
+        //we need x datasets, the first is the "key", the rest are related to column 0 name, column 1 name etc.
+        //30 items, 2 cols, 1 key. 10 rows of data per thingy.
+        try {
+            for (int i = 0; i < (values.length / cols); i++) { //go round 10 times.
+
+                pos = (i * cols); //0,3,6,9...
+                if (keyFormatter != null) {
+                    vs[0][i] = String.valueOf(keyFormatter.parse(values[pos]).getTime() + Text.getToday());
+                } else {
+                    vs[0][i] = String.valueOf(values[pos]);
+                }
+                for (int j = 1; j < cols; j++) {
+                    vs[j][i] = values[pos + j];
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Failure!!! pos:"+pos +" cols: "+cols + " valueslen: "+values.length,e);
+        }
+
+        
         List<String> jsDataSets = new ArrayList<String>();
-        for (int i = 1; i < dataSets.length;i++) { // 3 datasets came in, only 2 will we parse.
+        for (int i = 1; i < vs.length;i++) { // 3 datasets came in, only 2 will we parse.
             StringBuilder b = new StringBuilder("");
 
-            for (int j = 0; j < dataSets[0].length; j++) {
+            for (int j = 0; j < vs[0].length; j++) {
 
                 b.append("[");
-                b.append(dataSets[0][j]);
+                b.append(vs[0][j]);
                 b.append(",");
-                b.append(dataSets[i][j]);
+                b.append(vs[i][j]);
                 b.append("],");
             }
             String datastr = b.toString();
@@ -116,8 +248,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             	jsDataSets.add("[]");
             }
         }
-        return makeLineChartCode(chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);
+        return replaceChartTemplateWithValues(title,"X","Y",chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);        
     }
+
     
     private static String readTextFromResource(String file) {
     	StringBuilder b = new StringBuilder();
@@ -139,22 +272,29 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		return b.toString();
     }
 
-    private String makeLineChartCode(String chartId,String[] datasets,String template,String[] dataSetNames) {
+    private String replaceChartTemplateWithValues(String title,String xaxis, String yaxis,String chartId,String[] datasets,String template,String[] dataSetNames) {
     	if (template == null) {
         	template = "./web/oaktree/templates/LineChart.html";
         }
         String code = getLineChartTemplate(template).replaceAll("\\$\\{chart_id\\}",chartId);
-        int i = 0;
+        code = code.replaceAll("\\$\\{chart_title\\}",title);
+        code = code.replaceAll("\\$\\{chart_y_axis_name\\}",yaxis);
+        code = code.replaceAll("\\$\\{chart_x_axis_name\\}",xaxis);
+        //${chart_data_key}
+        code = code.replaceAll("\\$\\{chart_data_key\\}",dataSetNames[0]);
         int maxDataSets = 4;
         for (int set = 0; set < maxDataSets; set++) {
             String data = (set < datasets.length) ? datasets[set] : "";
-            String name = (set < datasets.length) ? dataSetNames[set] : "";
-        	code = code.replaceAll("\\$\\{chart_data"+(i+1)+"\\}",data);
-        	code = code.replaceAll("\\$\\{chart_dataset_name"+(i+1)+"\\}",name);
-        	i++;
+            code = code.replaceAll("\\$\\{chart_data"+(set+1)+"\\}",data);
         }
+        for (int set = 1; set < maxDataSets; set++) {
+            String data = (set < dataSetNames.length) ? dataSetNames[set] : "";
+            code = code.replaceAll("\\$\\{chart_dataset_name"+(set)+"\\}",data);
+        }
+    	    	
         return code;
     }
+
 
     //table_id, table_data, table_header.
     private String makePaginatedTableCode(String id, String title, String[] values, List<String> columns, String template) {
@@ -833,74 +973,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 
 
 
-    /**
-     * ${data-view type="line_chart" options="" title="Heap" source="memory.getSnapshots('Heap')" source-fields="time(Time),used(Used)"}
-     *
-     * @param repl
-     * @return
-     */
-    private String processDataViewLineChartRequest(String repl,ResourceContext ctx) throws Exception {
-        //explode the options from the line...
-        String[] options=getOption("options",repl).split("[,]");
-        String source = replaceSourceParams(getOption("source", repl), ctx);
-        String template = getOption("template", repl);
-        String keyField = getOption("key-field", repl);
-        String keyFormat = getOption("key-format", repl);
-        SimpleDateFormat keyFormatter = null;
-        if (keyFormat != null) {
-            keyFormatter = new SimpleDateFormat(keyFormat);
-        }
-        
-        String title = checkAndReplaceVars(getOption("title", repl), ctx);
-        String id = checkAndReplaceVars(getOption("id", repl, title+ "LineChart") , ctx).replace(" ","");
-        String source_flds=getOption("source-fields", repl); //TODO refactor the use of this. TODO remove spaces etc.
-        String sourceFields = "";
-        int cols = 0;
-        if (keyField != null) {
-        	sourceFields += keyField+",";
-        	cols++;
-        }
-        //List<String> columns = new ArrayList<String>();
-        for (String field:source_flds.split(",")) {
-            //int br = field.indexOf("("); //TODO should ban that syntax here.
-            sourceFields += field+",";
-            cols++;
-            //columns.add(field.substring(br+1,field.length()-1));
-        }
-        String[] values = getValue(source+":"+sourceFields,ctx).split(","); //this should get us all our cols in a flat format. we dont want flat...
-        if (values.length == 1 && values[0].equals("")) {
-        	values = new String[]{};
-        }
-        //TODO fields.
-        int sets = cols;
-        int dataSetSize = values.length/(sets);
-        String[][] vs = new String[sets][dataSetSize];
-        int set = -1;
-        int col = 0;
-        int row = 0;
-        int pos = 0;
-        //we need x datasets, the first is the "key", the rest are related to column 0 name, column 1 name etc.
-        //30 items, 2 cols, 1 key. 10 rows of data per thingy.
-        try {
-            for (int i = 0; i < (values.length / cols); i++) { //go round 10 times.
-
-                pos = (i * cols); //0,3,6,9...
-                if (keyFormatter != null) {
-                    vs[0][i] = String.valueOf(keyFormatter.parse(values[pos]).getTime() + Text.getToday());
-                } else {
-                    vs[0][i] = String.valueOf(values[pos]);
-                }
-                for (int j = 1; j < cols; j++) {
-                    vs[j][i] = values[pos + j];
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("Failure!!! pos:"+pos +" cols: "+cols + " valueslen: "+values.length,e);
-        }
-        String code = makeLineChartCode(id,vs,template,source_flds.split(","));
-        return code;
-    }
+ 
 
     private String replaceSourceParams(String source, ResourceContext ctx) throws Exception {
         int s = source.indexOf("(");

@@ -6,11 +6,11 @@
 
     <!-- amCharts javascript code -->
     <script type="text/javascript">
-			var chart = AmCharts.makeChart("chartdiv",
+			var chart = AmCharts.makeChart("chartdiv_${chart_id}",
 				{
 					"type": "serial",
 					"pathToImages": "http://cdn.amcharts.com/lib/3/images/",
-					"categoryField": "date",
+					"categoryField": "${chart_data_key}",
 					"dataDateFormat": "HH:NN:SS.fff",
 					"plotAreaBorderColor": "#BCB3B3",
 					"plotAreaFillAlphas": 0.11,
@@ -24,7 +24,7 @@
 						"title": "Time"
 					},
 					"chartCursor": {
-						"categoryBalloonDateFormat": "JJ:NN:SS"
+						"categoryBalloonDateFormat": "JJ:NN:SS.fff"
 					},
 					"chartScrollbar": {
 						"backgroundAlpha": 0.88,
@@ -44,23 +44,23 @@
 							"bullet": "round",
 							"bulletSize": 4,
 							"id": "AmGraph-1",
-							"title": "Used",
-							"valueField": "Used"
+							"title": "${chart_dataset_name1}",
+							"valueField": "${chart_dataset_name1}"
 						},
 						{
 							"bullet": "square",
 							"bulletOffset": -3,
 							"bulletSize": 4,
 							"id": "AmGraph-2",
-							"title": "Committed",
-							"valueField": "Committed"
+							"title": "${chart_dataset_name2}",
+							"valueField": "${chart_dataset_name2}"
 						}
 					],
 					"guides": [],
 					"valueAxes": [
 						{
 							"id": "ValueAxis-1",
-							"title": "Size (MB)"
+							"title": "${chart_y_axis_name}"
 						}
 					],
 					"allLabels": [],
@@ -73,46 +73,10 @@
 						{
 							"id": "Title-1",
 							"size": 15,
-							"text": "Java Heap"
+							"text": "${chart_title}"
 						}
 					],
-					"dataProvider": [
-						{
-							"date": "07:57:57.567",
-							"Used": "8.4",
-							"Committed": 5
-						},
-						{
-							"date": "07:57:58.567",
-							"Used": 6,
-							"Committed": 7
-						},
-						{
-							"date": "07:57:59.456",
-							"Used": "2.1",
-							"Committed": 3
-						},
-						{
-							"date": "07:58:00.345",
-							"Used": 1,
-							"Committed": 3
-						},
-						{
-							"date": "07:58:06.234",
-							"Used": 2,
-							"Committed": "1.1"
-						},
-						{
-							"date": "07:58:08.234",
-							"Used": 3,
-							"Committed": 2
-						},
-						{
-							"date": "07:59:00.456",
-							"Used": 6,
-							"Committed": 8
-						}
-					]
+					"dataProvider": ${chart_data1}
 				}
 			);
 			$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -123,4 +87,4 @@
 
 		</script>
 
-    <div id="chartdiv" style="width: 100%; height: 400px; background-color: #FFFFFF;" ></div>
+    <div id="chartdiv_${chart_id}" style="width: 100%; height: 400px; background-color: #FFFFFF;" ></div>

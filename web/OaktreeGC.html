@@ -32,7 +32,7 @@ ${import=OaktreeHeader.html}
                                 </div>
                                 <div class="tab-pane fade in" id="removedchart">
                                     <div class="panel-body">
-                                        ${data-view type="line_chart" options="" template="./web/oaktree/templates/AMLineChart.html" title="RemovedKb" source="service.gc.getAllGCEvents()" source-fields="removedK" key-field="startTime"}
+                                        ${data-view type="line_chart" options="" template="./web/oaktree/templates/AMLineChart.html" title="RemovedKb" source="service.gc.getAllGCEvents()" source-fields="removedK" key-field="startTimeAsString" x-axis-name="Time" y-axis-name="RemovedK"}
                                     </div>
                                 </div>
                             </div>

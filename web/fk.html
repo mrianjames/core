@@ -1,0 +1,558 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>4628@IJMonster</title>
+
+    <!-- Core CSS - Include with every page -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
+
+   
+    <!-- Page-Level Plugin CSS - Tables -->
+    <link href="css/plugins/dataTables/dataTables.bootstrap.css" rel="stylesheet">
+
+    <!-- SB Admin CSS - Include with every page -->
+    <link href="css/sb-admin.css" rel="stylesheet">
+
+    <!-- Core Scripts - Include with every page -->
+    <script src="js/jquery-1.10.2.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/plugins/metisMenu/jquery.metisMenu.js"></script>
+
+    <!-- Page-Level Plugin Scripts - Dashboard -->
+    <script src="js/plugins/morris/raphael-2.1.0.min.js"></script>
+    <script src="js/plugins/morris/morris.js"></script>
+
+    <script language="javascript" type="text/javascript" src="js/plugins/flot/jquery.flot.js"></script>
+
+
+    <!-- Page-Level Plugin Scripts - Tables -->
+    <script src="js/plugins/dataTables/jquery.dataTables.js"></script>
+    <script src="js/plugins/dataTables/dataTables.bootstrap.js"></script>
+
+    <!-- SB Admin Scripts - Include with every page -->
+    <script src="js/sb-admin.js"></script>
+
+	<script>
+		function format(val) {
+		    	var num = Number(val);
+		    	val = parseInt(num);
+			    val += '';
+	            x = val.split('.');
+	            x1 = x[0];
+	            x2 = x.length > 1 ? '.' + x[1] : '';
+	            var rgx = /(\d+)(\d{3})/;
+	            while (rgx.test(x1)) {
+	                x1 = x1.replace(rgx, '$1' + ',' + '$2');
+	            }
+	            return x1 + x2;
+            }
+	</script>
+</head>
+
+<body>
+	<div id="wrapper">
+
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                
+                <a class="navbar-brand" href="OaktreeIndex.html">4628@IJMonster Time: 15:26:09.910</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <ul class="nav navbar-top-links navbar-right">
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-envelope fa-fw"></i>  <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-messages">
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <strong>John Smith</strong>
+                                    <span class="pull-right text-muted">
+                                        <em>Yesterday</em>
+                                    </span>
+                                </div>
+                                <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eleifend...</div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <strong>John Smith</strong>
+                                    <span class="pull-right text-muted">
+                                        <em>Yesterday</em>
+                                    </span>
+                                </div>
+                                <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eleifend...</div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <strong>John Smith</strong>
+                                    <span class="pull-right text-muted">
+                                        <em>Yesterday</em>
+                                    </span>
+                                </div>
+                                <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eleifend...</div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a class="text-center" href="#">
+                                <strong>Read All Messages</strong>
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-messages -->
+                </li>
+                <!-- /.dropdown -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-tasks fa-fw"></i>  <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-tasks">
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <p>
+                                        <strong>Task 1</strong>
+                                        <span class="pull-right text-muted">40% Complete</span>
+                                    </p>
+                                    <div class="progress progress-striped active">
+                                        <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%">
+                                            <span class="sr-only">40% Complete (success)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <p>
+                                        <strong>Task 2</strong>
+                                        <span class="pull-right text-muted">20% Complete</span>
+                                    </p>
+                                    <div class="progress progress-striped active">
+                                        <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" style="width: 20%">
+                                            <span class="sr-only">20% Complete</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <p>
+                                        <strong>Task 3</strong>
+                                        <span class="pull-right text-muted">60% Complete</span>
+                                    </p>
+                                    <div class="progress progress-striped active">
+                                        <div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%">
+                                            <span class="sr-only">60% Complete (warning)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <p>
+                                        <strong>Task 4</strong>
+                                        <span class="pull-right text-muted">80% Complete</span>
+                                    </p>
+                                    <div class="progress progress-striped active">
+                                        <div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" style="width: 80%">
+                                            <span class="sr-only">80% Complete (danger)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a class="text-center" href="#">
+                                <strong>See All Tasks</strong>
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-tasks -->
+                </li>
+                <!-- /.dropdown -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-bell fa-fw"></i>  <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-alerts">
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <i class="fa fa-comment fa-fw"></i> New Comment
+                                    <span class="pull-right text-muted small">4 minutes ago</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <i class="fa fa-twitter fa-fw"></i> 3 New Followers
+                                    <span class="pull-right text-muted small">12 minutes ago</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <i class="fa fa-envelope fa-fw"></i> Message Sent
+                                    <span class="pull-right text-muted small">4 minutes ago</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <i class="fa fa-tasks fa-fw"></i> New Task
+                                    <span class="pull-right text-muted small">4 minutes ago</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a href="#">
+                                <div>
+                                    <i class="fa fa-upload fa-fw"></i> Server Rebooted
+                                    <span class="pull-right text-muted small">4 minutes ago</span>
+                                </div>
+                            </a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a class="text-center" href="#">
+                                <strong>See All Alerts</strong>
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-alerts -->
+                </li>
+                <!-- /.dropdown -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li><a href="login.html"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-user -->
+                </li>
+                <!-- /.dropdown -->
+            </ul>
+            <!-- /.navbar-top-links -->
+
+        </nav>
+        <!-- /.navbar-static-top -->
+
+        <nav class="navbar-default navbar-static-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="side-menu">
+                    <li class="sidebar-search">
+                        <div class="input-group custom-search-form">
+                            <input type="text" class="form-control" placeholder="Search...">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                        <!-- /input-group -->
+                    </li>
+                    <li>
+                        <a href="OaktreeIndex.html"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Process<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level">
+                        	<li>
+                                <a href="OaktreeSTW.html">Pauses</a>
+                            </li>
+                            <li>
+                                <a href="OaktreeMemory.html">Memory</a>
+                            </li>
+                            <li>
+                                <a href="OaktreeGC.html">GC</a>
+                            </li>
+                            <li>
+                                <a href="OaktreeSummary.html">Summary</a>
+                            </li>
+                        </ul>
+                        <!-- /.nav-second-level -->
+                    </li>
+                    <li>
+                        <a href="OaktreeEnvironment.html"><i class="fa fa-table fa-fw"></i> Environment</a>
+                    </li>
+                    
+                    <li>
+                        <a href="#"><i class="fa fa-wrench fa-fw"></i> Oaktree<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level">
+                            <li>
+                                <a href="OaktreeDispatcher.html">Dispatcher</a>
+                            </li>
+                            <li>
+                                <a href="OaktreeComponents.html">Components</a>
+                            </li>
+                            <li>
+                                <a href="OaktreeMessages.html">Messages</a>
+                            </li>
+                            
+                        </ul>
+                        <!-- /.nav-second-level -->
+                    </li>
+                    <li>
+                        <a href="#"><i class="fa fa-sitemap fa-fw"></i> Application<span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level">
+                            <li>
+                                <a href="OaktreeAudit.html">Audit</a>
+                            </li>
+                            <li>
+                                <a href="OaktreeLatency.html">Latency</a>
+                            </li>
+                            <li>
+                                <a href="#">Third Level <span class="fa arrow"></span></a>
+                                <ul class="nav nav-third-level">
+                                    <li>
+                                        <a href="#">Third Level Item</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Item</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Item</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">Third Level Item</a>
+                                    </li>
+                                </ul>
+                                <!-- /.nav-third-level -->
+                            </li>
+                        </ul>
+                        <!-- /.nav-second-level -->
+                    </li>
+                    
+                </ul>
+                <!-- /#side-menu -->
+            </div>
+            <!-- /.sidebar-collapse -->
+        </nav>
+        <!-- /.navbar-static-side -->
+
+<div id="page-wrapper">
+    <div class="row"/>
+    <br/>
+    <div class="panel-heading">
+        Garbage Collection
+    </div>
+    <!-- .panel-heading -->
+    <div class="panel-body">
+        <div class="panel-group" id="accordion">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">GC</a>
+                    </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="panel-body">
+                            <ul class="nav nav-tabs" id="ijtabs">
+                                <li class="active"><a href="#gcdata" data-toggle="tab">GC Data</a></li>
+                                <li><a href="#removedchart" data-toggle="tab">Removed Chart</a></li>
+                            </ul>
+
+                            <!-- Tab panes -->
+                            <div class="tab-content">
+                                <div class="tab-pane fade in active" id="gcdata">
+                                    <div class="panel-body">
+                                        <div class="table-responsive">
+	<table class="table table-bordered table-hover table-striped" id="table_GCPagTable">
+		<thead>
+			<tr><th>Time</th><th>Event</th><th>Cause</th><th>Action</th><th>Duration</th><th>RemovedKB</th><th>Details</th></tr>
+		</thead>
+		<tbody><tr><td>06:17:40.452</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>13635</td><td>3162</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{0->0.65}]][Eden Space[comm:{ 4.31->4.31} used:{4.24->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0->0.5}]]</td></tr><tr><td>06:17:40.486</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>9416</td><td>3308</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{0.65->1.61}]][Eden Space[comm:{ 4.31->4.31} used:{4.19->0}]]</td></tr><tr><td>06:17:40.521</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>6411</td><td>3781</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{1.61->2.35}]][Eden Space[comm:{ 4.31->4.31} used:{4.31->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.5->0.39}]]</td></tr><tr><td>06:17:40.569</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>2652</td><td>3510</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{2.35->3.07}]][Eden Space[comm:{ 4.31->4.31} used:{4.26->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.39->0.5}]]</td></tr><tr><td>06:17:40.599</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>2309</td><td>3339</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{3.07->4.05}]][Eden Space[comm:{ 4.31->4.31} used:{4.25->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.5->0.5}]]</td></tr><tr><td>06:17:40.624</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>2007</td><td>3375</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{4.05->4.89}]][Eden Space[comm:{ 4.31->4.31} used:{4.13->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.5->0.5}]]</td></tr><tr><td>06:17:40.638</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>2263</td><td>3566</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{4.89->5.98}]][Eden Space[comm:{ 4.31->4.31} used:{4.08->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.5->0}]]</td></tr><tr><td>06:17:40.670</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>2352</td><td>2973</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{5.98->6.88}]][Eden Space[comm:{ 4.31->4.31} used:{4.3->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0->0.5}]]</td></tr><tr><td>06:17:40.730</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>1908</td><td>3615</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{6.88->7.58}]][Eden Space[comm:{ 4.31->4.31} used:{4.23->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.5->0.5}]]</td></tr><tr><td>06:23:22.933</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>1949</td><td>4157</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{7.58->7.92}]][Eden Space[comm:{ 4.31->4.31} used:{4.31->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.5->0.41}]]</td></tr><tr><td>06:29:27.426</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>2638</td><td>4315</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{7.92->8.33}]][Eden Space[comm:{ 4.31->4.31} used:{4.31->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.41->0.1}]]</td></tr><tr><td>06:30:58.656</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>3729</td><td>3705</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{8.33->8.63}]][Eden Space[comm:{ 4.31->4.31} used:{4.31->0}]][Survivor Space[comm:{ 0.5->0.5} used:{0.1->0.5}]]</td></tr><tr><td>06:30:58.695</td><td>Copy</td><td>Allocation Failure</td><td>end of minor GC</td><td>5322</td><td>3139</td><td>[Tenured Gen[comm:{ 10.69->10.69} used:{8.63->9.84}]][Eden Space[comm:{ 4.31->4.31} used:{4.28->0}]]</td></tr></tbody>
+	</table>
+</div>
+<script>
+
+            
+	$(document).ready(function() {
+		$('#table_GCPagTable').dataTable({
+			"columnDefs": [
+			{
+				"render": function ( data, type, row ) {
+                    return format(data);
+                }
+                <!--,                "targets": "_all" -->
+			}
+			]
+		});
+	})
+ </script>
+
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade in" id="removedchart">
+                                    <div class="panel-body">
+                                        
+    <!-- amCharts javascript sources -->
+    <script type="text/javascript" src="http://cdn.amcharts.com/lib/3/amcharts.js"></script>
+    <script type="text/javascript" src="http://cdn.amcharts.com/lib/3/serial.js"></script>
+
+
+    <!-- amCharts javascript code -->
+    <script type="text/javascript">
+			var chart = AmCharts.makeChart("chartdiv",
+				{
+					"type": "serial",
+					"pathToImages": "http://cdn.amcharts.com/lib/3/images/",
+					"categoryField": "date",
+					"dataDateFormat": "HH:NN:SS.fff",
+					"plotAreaBorderColor": "#BCB3B3",
+					"plotAreaFillAlphas": 0.11,
+					"plotAreaFillColors": "#A9D1F6",
+					"borderColor": "#BCB3B3",
+					"color": "#1D4183",
+					"fontSize": 10,
+					"categoryAxis": {
+						"minPeriod": "ss",
+						"parseDates": true,
+						"title": "Time"
+					},
+					"chartCursor": {
+						"categoryBalloonDateFormat": "JJ:NN:SS"
+					},
+					"chartScrollbar": {
+						"backgroundAlpha": 0.88,
+						"backgroundColor": "#FFFFFF",
+						"dragIconHeight": 45,
+						"dragIconWidth": 10,
+						"graphFillColor": "#FFFFFF",
+						"graphLineColor": "#FFFFFF",
+						"selectedBackgroundAlpha": 0.34,
+						"selectedBackgroundColor": "#A9D1F6",
+						"selectedGraphFillColor": "#FFFFFF",
+						"selectedGraphLineColor": "#A9D1F6"
+					},
+					"trendLines": [],
+					"graphs": [
+						{
+							"bullet": "round",
+							"bulletSize": 4,
+							"id": "AmGraph-1",
+							"title": "removedK",
+							"valueField": "removedK"
+						}
+					],
+					"guides": [],
+					"valueAxes": [
+						{
+							"id": "ValueAxis-1",
+							"title": "RemovedMB"
+						}
+					],
+					"allLabels": [],
+					"balloon": {},
+					"legend": {
+						"maxColumns": -10,
+						"useGraphSettings": true
+					},
+					"titles": [
+						{
+							"id": "Title-1",
+							"size": 15,
+							"text": "RemovedKb"
+						}
+					],
+					"dataProvider": [
+						{
+							"date": "06:17:40.452",
+							"removedK": "3162"	
+						},
+						{ 
+							"date": "06:17:40.486",  
+							"removedK": "3308"
+						},
+						{ 
+							"date": "06:17:40.521",  
+							"removedK": "3781"	
+						}
+					]
+				}
+			);
+			$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                  e.target // activated tab
+                  e.relatedTarget // previous tab
+                  chart.invalidateSize();
+                });
+
+		</script>
+
+    <div id="chartdiv" style="width: 100%; height: 400px; background-color: #FFFFFF;" ></div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+    </div>
+    <!-- /#wrapper -->
+
+
+
+    
+</body>
+
+</html>
