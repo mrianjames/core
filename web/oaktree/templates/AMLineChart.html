@@ -1,9 +1,3 @@
-
-    <!-- amCharts javascript sources -->
-    <script type="text/javascript" src="http://cdn.amcharts.com/lib/3/amcharts.js"></script>
-    <script type="text/javascript" src="http://cdn.amcharts.com/lib/3/serial.js"></script>
-
-
     <!-- amCharts javascript code -->
     <script type="text/javascript">
 			var chart = AmCharts.makeChart("chartdiv_${chart_id}",
@@ -11,7 +5,7 @@
 					"type": "serial",
 					"pathToImages": "http://cdn.amcharts.com/lib/3/images/",
 					"categoryField": "${chart_data_key}",
-					"dataDateFormat": "HH:NN:SS.fff",
+					"dataDateFormat": "JJ:NN:SS.fff",
 					"plotAreaBorderColor": "#BCB3B3",
 					"plotAreaFillAlphas": 0.11,
 					"plotAreaFillColors": "#A9D1F6",
@@ -19,7 +13,7 @@
 					"color": "#1D4183",
 					"fontSize": 10,
 					"categoryAxis": {
-						"minPeriod": "ss",
+						"minPeriod": "fff",
 						"parseDates": true,
 						"title": "Time"
 					},

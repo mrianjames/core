@@ -16,4 +16,8 @@ public interface IGCService extends IComponent {
 	public String[] getGCEventTypes();
 	public GCEvent[] getAllGCEventsBetween(long start, long end);
 	public GCEvent[] getAllGCEventsBetween(String type,long start, long end);
+	public long getTotalGCTimeMs();
+	public double getTotalRemovedB();
+	public double getTotalRemovedK();
+	public double getTotalRemovedM();
 }

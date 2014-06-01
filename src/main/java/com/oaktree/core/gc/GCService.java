@@ -17,6 +17,8 @@ import javax.management.openmbean.CompositeData;
 
 import com.oaktree.core.pool.IPool;
 import com.oaktree.core.pool.SimplePool;
+import com.oaktree.core.time.ITime;
+import com.oaktree.core.time.JavaTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +49,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	protected static final String YOUNG = "Young Gen GC";
 	protected static final String OLD =  "Old Gen GC";
 	protected static final String G1 =  "G1";
+	private AtomicLong totalRemovedB = new AtomicLong(0);
 	
 	public GCService(String name) {
 		this.setName(name);
@@ -64,7 +67,11 @@ public class GCService extends AbstractComponent implements IGCService {
 		this.registerForJmxUpdates();
 		this.setState(ComponentState.AVAILABLE);
 	}
-	
+
+	private ITime time = new JavaTime();
+	public void setTime(ITime time) {
+		this.time = time;
+	}
 	private void registerForJmxUpdates() {
 		checkJavaVersionSupportsJmxUpdates();
 	    super.start();
@@ -85,6 +92,7 @@ public class GCService extends AbstractComponent implements IGCService {
                 //implement the notifier callback handler
                 @Override
                 public void handleNotification(Notification notification, Object handback) {
+                	long now = time.getTimeOfDay();
                 	try {
 	                    //we only handle GARBAGE_COLLECTION_NOTIFICATION notifications here
 	                    if (notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
@@ -108,7 +116,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	                        Map<String, MemoryUsage> membefore = info.getGcInfo().getMemoryUsageBeforeGc();
 	                        Map<String, MemoryUsage> mem = info.getGcInfo().getMemoryUsageAfterGc();
 	                        double totCollection;
-	                        GCEvent gc = new GCEvent( startTime + info.getGcInfo().getStartTime(), startTime + info.getGcInfo().getEndTime(),gctype, info.getGcName(), info.getGcAction(), info.getGcCause());
+	                        GCEvent gc = new GCEvent( now,startTime + info.getGcInfo().getStartTime(), startTime + info.getGcInfo().getEndTime(),gctype, info.getGcName(), info.getGcAction(), info.getGcCause());
                             
 
                             //System.out.print(name + (memCommitted==memMax?"(fully expanded)":"(still expandable)") +"used: "+(beforepercent/10)+"."+(beforepercent%10)+"%->"+(percent/10)+"."+(percent%10)+"%("+((memUsed/1048576)+1)+"MB) / ");
@@ -160,9 +168,15 @@ public class GCService extends AbstractComponent implements IGCService {
 		}
 		this.allEvents.add(event);
 		this.cumulativeGCTime.addAndGet(event.getDuration());
+		long removed = event.getRemovedB();
+		if (removed > 0) {
+			this.totalRemovedB.addAndGet(removed);
+		}
+			
 		if (logger.isInfoEnabled()) {
 			logger.info(event.toString());
 		}
+		
 	}
 	private void checkJavaVersionSupportsJmxUpdates() {
 		String specv = ManagementFactory.getRuntimeMXBean().getSpecVersion();
@@ -211,6 +225,22 @@ public class GCService extends AbstractComponent implements IGCService {
 			long end) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	@Override
+	public long getTotalGCTimeMs() {
+		return cumulativeGCTime.get();
+	}
+	@Override
+	public double getTotalRemovedB() {
+		return totalRemovedB.get();
+	}
+	@Override
+	public double getTotalRemovedK() {
+		return (double)getTotalRemovedB()/1024d;
+	}
+	@Override
+	public double getTotalRemovedM() {
+		return (double)getTotalRemovedK()/1024d;
 	}
 
 }

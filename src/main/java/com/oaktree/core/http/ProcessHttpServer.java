@@ -91,6 +91,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     private String paginatedTableCodeTemplate;
 
     private static String dataViewLineChart = "line_chart";
+    private static String dataViewBarChart = "bar_chart";
     private static String dataViewPaginatedTable = "paginated_table";
 
     /**
@@ -99,7 +100,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
      * @param repl
      * @return
      */
-    private String processDataViewLineChartRequest(String repl,ResourceContext ctx) throws Exception {
+    private String processDataViewChartRequest(String type,String repl,ResourceContext ctx) throws Exception {
         //explode the options from the line...
         String[] options=getOption("options",repl).split("[,]");
         String source = replaceSourceParams(getOption("source", repl), ctx);
@@ -136,7 +137,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         
         //return makeLineChartCode(title,id,values,template,source_flds.split(","),keyFormatter,cols);
         String code = getAmChartData(values,sourceFields.split(","));
-        return replaceChartTemplateWithValues(title,xAxisName,yAxisName,id,new String[]{code},template,sourceFields.split(","));
+        return replaceChartTemplateWithValues(type,title,xAxisName,yAxisName,id,new String[]{code},template,sourceFields.split(","));
     }
     
     
@@ -188,68 +189,68 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     	return b.toString();
     }
 
-    /**
-     * For FLOT. Make data into right format.
-     * @param title
-     * @param chartId
-     * @param values
-     * @param template
-     * @param dataSetNames
-     * @param keyFormatter
-     * @param cols
-     * @return
-     */
-    public String generateFlotChart(String title,String chartId, String[] values, String template, String[] dataSetNames,DateFormat keyFormatter, int cols ) {
-    	
-    	int sets = cols;
-        int dataSetSize = values.length/(sets);
-        String[][] vs = new String[sets][dataSetSize];
-        int pos = 0;
-        //we need x datasets, the first is the "key", the rest are related to column 0 name, column 1 name etc.
-        //30 items, 2 cols, 1 key. 10 rows of data per thingy.
-        try {
-            for (int i = 0; i < (values.length / cols); i++) { //go round 10 times.
-
-                pos = (i * cols); //0,3,6,9...
-                if (keyFormatter != null) {
-                    vs[0][i] = String.valueOf(keyFormatter.parse(values[pos]).getTime() + Text.getToday());
-                } else {
-                    vs[0][i] = String.valueOf(values[pos]);
-                }
-                for (int j = 1; j < cols; j++) {
-                    vs[j][i] = values[pos + j];
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("Failure!!! pos:"+pos +" cols: "+cols + " valueslen: "+values.length,e);
-        }
-
-        
-        List<String> jsDataSets = new ArrayList<String>();
-        for (int i = 1; i < vs.length;i++) { // 3 datasets came in, only 2 will we parse.
-            StringBuilder b = new StringBuilder("");
-
-            for (int j = 0; j < vs[0].length; j++) {
-
-                b.append("[");
-                b.append(vs[0][j]);
-                b.append(",");
-                b.append(vs[i][j]);
-                b.append("],");
-            }
-            String datastr = b.toString();
-            if (datastr.length() > 0){
-	            String data = datastr.substring(0, datastr.length() - 1);
-	
-	            jsDataSets.add(data);
-
-            } else {
-            	jsDataSets.add("[]");
-            }
-        }
-        return replaceChartTemplateWithValues(title,"X","Y",chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);        
-    }
+//    /**
+//     * For FLOT. Make data into right format.
+//     * @param title
+//     * @param chartId
+//     * @param values
+//     * @param template
+//     * @param dataSetNames
+//     * @param keyFormatter
+//     * @param cols
+//     * @return
+//     */
+//    public String generateFlotChart(String title,String chartId, String[] values, String template, String[] dataSetNames,DateFormat keyFormatter, int cols ) {
+//    	
+//    	int sets = cols;
+//        int dataSetSize = values.length/(sets);
+//        String[][] vs = new String[sets][dataSetSize];
+//        int pos = 0;
+//        //we need x datasets, the first is the "key", the rest are related to column 0 name, column 1 name etc.
+//        //30 items, 2 cols, 1 key. 10 rows of data per thingy.
+//        try {
+//            for (int i = 0; i < (values.length / cols); i++) { //go round 10 times.
+//
+//                pos = (i * cols); //0,3,6,9...
+//                if (keyFormatter != null) {
+//                    vs[0][i] = String.valueOf(keyFormatter.parse(values[pos]).getTime() + Text.getToday());
+//                } else {
+//                    vs[0][i] = String.valueOf(values[pos]);
+//                }
+//                for (int j = 1; j < cols; j++) {
+//                    vs[j][i] = values[pos + j];
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            logger.error("Failure!!! pos:"+pos +" cols: "+cols + " valueslen: "+values.length,e);
+//        }
+//
+//        
+//        List<String> jsDataSets = new ArrayList<String>();
+//        for (int i = 1; i < vs.length;i++) { // 3 datasets came in, only 2 will we parse.
+//            StringBuilder b = new StringBuilder("");
+//
+//            for (int j = 0; j < vs[0].length; j++) {
+//
+//                b.append("[");
+//                b.append(vs[0][j]);
+//                b.append(",");
+//                b.append(vs[i][j]);
+//                b.append("],");
+//            }
+//            String datastr = b.toString();
+//            if (datastr.length() > 0){
+//	            String data = datastr.substring(0, datastr.length() - 1);
+//	
+//	            jsDataSets.add(data);
+//
+//            } else {
+//            	jsDataSets.add("[]");
+//            }
+//        }
+//        return replaceChartTemplateWithValues(title,"X","Y",chartId,jsDataSets.toArray(new String[jsDataSets.size()]),template,dataSetNames);        
+//    }
 
     
     private static String readTextFromResource(String file) {
@@ -271,12 +272,22 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     	}
 		return b.toString();
     }
-
-    private String replaceChartTemplateWithValues(String title,String xaxis, String yaxis,String chartId,String[] datasets,String template,String[] dataSetNames) {
+    private final static String CHART_TYPE_LINE = "LINE";
+    private final static String CHART_TYPE_BAR = "BAR";
+     
+    private String replaceChartTemplateWithValues(String type,String title,String xaxis, String yaxis,String chartId,String[] datasets,String template,String[] dataSetNames) {
     	if (template == null) {
-        	template = "./web/oaktree/templates/LineChart.html";
+    		if (type.equals(CHART_TYPE_LINE)) {
+    			template = "./web/oaktree/templates/AMLineChart.html";
+    		} else if (type.equals(CHART_TYPE_BAR)) {
+    			template = "./web/oaktree/templates/AMBarChart.html";
+    		}
         }
-        String code = getLineChartTemplate(template).replaceAll("\\$\\{chart_id\\}",chartId);
+        String code = getLineChartTemplate(template);
+        if (code == null) {
+        	return "No Template found: " + template;
+        }
+        code = code.replaceAll("\\$\\{chart_id\\}",chartId);
         code = code.replaceAll("\\$\\{chart_title\\}",title);
         code = code.replaceAll("\\$\\{chart_y_axis_name\\}",yaxis);
         code = code.replaceAll("\\$\\{chart_x_axis_name\\}",xaxis);
@@ -287,7 +298,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             String data = (set < datasets.length) ? datasets[set] : "";
             code = code.replaceAll("\\$\\{chart_data"+(set+1)+"\\}",data);
         }
-        for (int set = 1; set < maxDataSets; set++) {
+        for (int set = 1; set <= maxDataSets; set++) {
             String data = (set < dataSetNames.length) ? dataSetNames[set] : "";
             code = code.replaceAll("\\$\\{chart_dataset_name"+(set)+"\\}",data);
         }
@@ -713,7 +724,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     }
 
     private String[] chunkTextToJavaArgs(String repl,ResourceContext ctx) throws Exception {
-    	repl = repl.substring(repl.lastIndexOf('(')+1,repl.lastIndexOf(')'));
+    	repl = repl.substring(repl.indexOf('(')+1,repl.lastIndexOf(')'));
     	if (repl.length() < 1) {
     		return new String[]{};
     	}
@@ -934,7 +945,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     private String processDataViewRequest(String repl,ResourceContext ctx) throws Exception {
         String type = getDataViewType(repl);
         if (type.equals(dataViewLineChart)) {
-            return processDataViewLineChartRequest(repl,ctx);
+            return processDataViewChartRequest(CHART_TYPE_LINE,repl,ctx);
+        } else if (type.equals(dataViewBarChart)) {
+            return processDataViewChartRequest(CHART_TYPE_BAR,repl,ctx);
         } else if (type.equals(dataViewPaginatedTable)) {
             return processDataViewPaginatedTableRequest(repl,ctx);
         }

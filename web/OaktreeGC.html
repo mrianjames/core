@@ -6,6 +6,8 @@ ${import=OaktreeHeader.html}
     <div class="panel-heading">
         Garbage Collection
     </div>
+    Total GC Time: ${service.gc.getTotalGCTimeMs()}
+    Total Removed: ${java.com.oaktree.core.utils.Text.to2Dp(service.gc.getTotalRemovedB())}
     <!-- .panel-heading -->
     <div class="panel-body">
         <div class="panel-group" id="accordion">
@@ -27,12 +29,12 @@ ${import=OaktreeHeader.html}
                             <div class="tab-content">
                                 <div class="tab-pane fade in active" id="gcdata">
                                     <div class="panel-body">
-                                        ${data-view type="paginated_table" options="" title="GC" source="service.gc.getAllGCEvents()" source-fields="startTimeAsString(Time),name(Event),cause(Cause),action(Action),duration(Duration),removedK(RemovedKB),description(Details)"}
+                                        ${data-view type="paginated_table" options="" title="GC" source="service.gc.getAllGCEvents()" source-fields="eventTimeMs(Time),name(Event),cause(Cause),action(Action),duration(Duration),removedK(RemovedKB),description(Details)"}
                                     </div>
                                 </div>
                                 <div class="tab-pane fade in" id="removedchart">
                                     <div class="panel-body">
-                                        ${data-view type="line_chart" options="" template="./web/oaktree/templates/AMLineChart.html" title="RemovedKb" source="service.gc.getAllGCEvents()" source-fields="removedK" key-field="startTimeAsString" x-axis-name="Time" y-axis-name="RemovedK"}
+                                        ${data-view type="line_chart" options="" template="./web/oaktree/templates/AMLineChart.html" title="RemovedKb" source="service.gc.getAllGCEvents()" source-fields="removedK" key-field="eventTimeMs" x-axis-name="Time" y-axis-name="RemovedK"}
                                     </div>
                                 </div>
                             </div>

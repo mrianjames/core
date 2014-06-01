@@ -1,0 +1,133 @@
+
+		<!-- amCharts javascript code -->
+		<script type="text/javascript">
+			var chart${chart_id} = AmCharts.makeChart("chartdiv_${chart_id}",
+				{
+					"type": "serial",
+					"pathToImages": "http://cdn.amcharts.com/lib/3/images/",
+					"balloonDateFormat": "JJ:NN:SS.fff",
+					"categoryField": "${chart_data_key}",
+					"columnSpacing": 0,
+					"columnWidth": 0.09,
+					"dataDateFormat": "JJ:NN:SS.fff",
+					"startDuration": 1,
+					"theme": "default",
+					"categoryAxis": {
+						"dateFormats": [
+							{
+								"period": "fff",
+								"format": "JJ:NN:SS"
+							},
+							{
+								"period": "ss",
+								"format": "JJ:NN:SS"
+							},
+							{
+								"period": "mm",
+								"format": "JJ:NN"
+							},
+							{
+								"period": "hh",
+								"format": "JJ:NN"
+							},
+							{
+								"period": "DD",
+								"format": "MMM DD"
+							},
+							{
+								"period": "WW",
+								"format": "MMM DD"
+							},
+							{
+								"period": "MM",
+								"format": "MMM"
+							},
+							{
+								"period": "YYYY",
+								"format": "YYYY"
+							}
+						],
+						"gridPosition": "start",
+						"minPeriod": "fff",
+						"parseDates": false,
+						"title": "Time"
+					},
+					"chartCursor": {
+						"categoryBalloonDateFormat": "JJ:NN:SS.fff"
+					},
+					"chartScrollbar": {},
+					"trendLines": [],
+					"graphs": [
+						{
+							"fillAlphas": 0.53,
+							"id": "AmGraph-1",
+							"title": "${chart_dataset_name1}",
+							"type": "column",
+							"valueField": "${chart_dataset_name1}",
+						},
+						{
+							"fillAlphas": 0.24,
+							"id": "AmGraph-2",
+							"title": "${chart_dataset_name2}",
+							"type": "column",
+							"valueAxis": "ValueAxis-1",
+							"valueField": "${chart_dataset_name2}"
+						},
+						{
+							"fillAlphas": 0.38,
+							"id": "AmGraph-3",
+							"title": "${chart_dataset_name3}",
+							"type": "column",
+							"valueField": "${chart_dataset_name3}"
+						},
+						{
+							"fillAlphas": 0.23,
+							"id": "AmGraph-4",
+							"title": "${chart_dataset_name4}",
+							"type": "column",
+							"valueAxis": "ValueAxis-1",
+							"valueField": "${chart_dataset_name4}"
+						}
+					],
+					"guides": [],
+					"valueAxes": [
+						{
+							"id": "ValueAxis-1",
+							"title": "${chart_y_axis_name}"
+						}
+					],
+					"allLabels": [],
+					"balloon": {},
+					"titles": [
+						{
+							"id": "Title-1",
+							"size": 15,
+							"text": "${chart_title}"
+						}
+					],
+					"dataProvider": ${chart_data1}
+				}
+			);
+			//container event handlers - we need to refactor this to search for relevant parent elements...
+			$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {				
+                  e.target // activated tab
+                  e.relatedTarget // previous tab
+                  chart${chart_id}.invalidateSize();
+                });
+            $('#collapseOne').on('shown.bs.collapse', function (e) {
+                  e.target // activated tab
+                  e.relatedTarget // previous tab                  
+                  chart${chart_id}.invalidateSize();
+                });
+           $('#collapseTwo').on('shown.bs.collapse', function (e) {
+                  e.target // activated tab
+                  e.relatedTarget // previous tab                  
+                  chart${chart_id}.invalidateSize();
+                });
+           $('#collapseThree').on('shown.bs.collapse', function (e) {
+                  e.target // activated tab
+                  e.relatedTarget // previous tab                  
+                  chart${chart_id}.invalidateSize();
+                });
+</script>
+<div id="chartdiv_${chart_id}" style="width: 100%; height: 400px; background-color: #FFFFFF;" ></div>

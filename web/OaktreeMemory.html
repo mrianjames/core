@@ -27,7 +27,7 @@ ${import=OaktreeHeader.html}
                                     <div class="tab-content">
                                         <div class="tab-pane fade in active" id="heapchart">
                                             <div class="panel-body">
-                                                ${data-view type="line_chart" options="" title="Heap" source="service.memory.getSnapshots(Heap)" source-fields="usedM,committedM,initM,maxM" key-field="time" key-format="hh:mm:ss.SSS"}
+                                                ${data-view type="bar_chart" options="" title="Heap" source="service.memory.getSnapshots(Heap)" source-fields="usedM,committedM,initM,maxM" key-field="time" key-format="hh:mm:ss.SSS" x-axis-name="Time" y-axis-name="Size(Mb)"}
                                             </div>
                                         </div>
                                         <div class="tab-pane fade" id="heapdata">
@@ -56,7 +56,7 @@ ${import=OaktreeHeader.html}
                                     <div class="tab-content">
                                         <div class="tab-pane fade in active" id="nonheapchart">
                                             <div class="panel-body">
-                                                ${data-view type="line_chart" options="" id="nonheap_line_chart" title="Non Heap" source="service.memory.getSnapshots(NonHeap)" source-fields="usedM,committedM" key-field="time" key-format="hh:mm:ss.SSS"}
+                                                ${data-view type="bar_chart" options="" id="nonheap_line_chart" title="Non Heap" source="service.memory.getSnapshots(NonHeap)" source-fields="usedM,committedM" key-field="time" key-format="hh:mm:ss.SSS" x-axis-name="Time" y-axis-name="Size(Mb)"}
                                             </div>
                                         </div>
                                         <div class="tab-pane fade" id="nonheapdata">

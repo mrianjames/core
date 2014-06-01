@@ -13,9 +13,11 @@ public class GCEvent {
     private long etime;
 	private String name;
 	private String type;
+	private long eventTimeMs;
 	
-	public GCEvent(long stime, long etime, String type,String name,String action, String cause) {
+	public GCEvent(long eventTimeMs,long stime, long etime, String type,String name,String action, String cause) {
     	this.stime = stime;
+    	this.eventTimeMs = eventTimeMs;
         this.etime = etime;
 		this.name = name;
 		this.cause = cause;
@@ -29,7 +31,10 @@ public class GCEvent {
 	public String getStartTimeAsString() {
 		return Text.renderTime(stime/1000);
 	}
-    public long getEndTime() { return etime; }
+	public String getEventTimeMs() {
+		return Text.renderTime(eventTimeMs);
+	}
+    public long getEndTime() { return etime/1000; }
 
 	public String getName() {
 		return name;
@@ -62,7 +67,7 @@ public class GCEvent {
     @Override
     public String toString() {
     	
-        return Text.renderTime(stime/1000) + " " +name + " ("+type+")" + action + " "+ cause + " duration:" + (etime-stime) + "us. " + getDescription().toString();
+        return getEventTimeMs() + " " +name + " ("+type+")" + action + " "+ cause + " duration:" + (etime-stime) + "us. " + getDescription().toString();
     }
     public String getDescription() {
     	StringBuilder memareas = new StringBuilder();
