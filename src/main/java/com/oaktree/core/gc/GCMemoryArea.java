@@ -47,7 +47,7 @@ public class GCMemoryArea {
 		return getWasCommittedK()/1024;
 	}
 	public double getIsCommittedB() {
-		return wasCommitted;
+		return isCommitted;
 	}
 	public double getIsCommittedK() {
 		return getIsCommittedB()/1024;

@@ -30,6 +30,11 @@ public class MultiMap<E,F> implements IMultiMap<E,F> {
         collectionFactory = new ArrayListFactory<F>();
     }
 
+    public MultiMap(boolean concurrent){
+        map = new HashMapFactory<E,Collection<F>>(concurrent).create();
+        collectionFactory = new ArrayListFactory<F>(concurrent);
+    }
+
     public MultiMap(IMapFactory<E, Collection<F>> mapFactory, ICollectionFactory<F> collectionFactory) {
         map = mapFactory.create();
         this.collectionFactory = collectionFactory;

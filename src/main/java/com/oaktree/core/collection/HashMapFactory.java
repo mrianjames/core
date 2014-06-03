@@ -20,6 +20,9 @@ public class HashMapFactory<E,F> implements IMapFactory<E,F> {
         this.capacity = capacity;
         this.concurrent = concurrent;
     }
+    public HashMapFactory(boolean concurrent) {
+        this.concurrent = concurrent;
+    }
     @Override
     public Map<E, F> create() {
         if (concurrent) {

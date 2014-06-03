@@ -4,8 +4,11 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
@@ -15,6 +18,8 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 
+import com.oaktree.core.collection.multimap.IMultiMap;
+import com.oaktree.core.collection.multimap.MultiMap;
 import com.oaktree.core.pool.IPool;
 import com.oaktree.core.pool.SimplePool;
 import com.oaktree.core.time.ITime;
@@ -40,6 +45,8 @@ import com.sun.management.GarbageCollectionNotificationInfo;
  * -XX:+UseParNewGC
  * -XX:+UseConcMarkSweepGC
  *
+ * -XX:+UseG1GC
+ *
  * @author ij
  *
  */
@@ -58,6 +65,7 @@ public class GCService extends AbstractComponent implements IGCService {
 	}
 
     private List<GCEvent> allEvents = new CopyOnWriteArrayList<GCEvent>();
+    private IMultiMap<String,GCEvent> eventsByType = new MultiMap<>(true);
 	private static long startTime = System.currentTimeMillis()*1000;
 	//total gc duration in us.
 	private AtomicLong cumulativeGCTime = new AtomicLong(0);
@@ -81,7 +89,14 @@ public class GCService extends AbstractComponent implements IGCService {
         //Install a notifcation handler for each bean
         for (GarbageCollectorMXBean gcbean : gcbeans) {
             //System.out.println(gcbean.getName());
+            //G1 Young Generation
+            //G1 Old Generation
+            //copy (normal gc)
+            //MarkSweepCompact
+            //ParNew
+            //ConcurrentMarkSweep
         	this.addGcType(gcbean.getName());
+
             NotificationEmitter emitter = (NotificationEmitter) gcbean;
             //use an anonymously generated listener for this example
             // - proper code should really use a named class
@@ -167,6 +182,7 @@ public class GCService extends AbstractComponent implements IGCService {
 			return;
 		}
 		this.allEvents.add(event);
+        eventsByType.put(event.getName(),event);
 		this.cumulativeGCTime.addAndGet(event.getDuration());
 		long removed = event.getRemovedB();
 		if (removed > 0) {
@@ -174,7 +190,7 @@ public class GCService extends AbstractComponent implements IGCService {
 		}
 			
 		if (logger.isInfoEnabled()) {
-			logger.info(event.toString());
+			logger.info("GCEvent: "+event.toString());
 		}
 		
 	}
@@ -204,27 +220,42 @@ public class GCService extends AbstractComponent implements IGCService {
 
 	@Override
 	public GCEvent[] getAllGCEvents(String type) {
-		// TODO Auto-generated method stub
-		return null;
+		Collection<GCEvent> x = new ArrayList<GCEvent>();
+        x = this.eventsByType.get(type);
+        if (x == null) {
+            return new GCEvent[]{};
+        }
+        return x.toArray(new GCEvent[x.size()]);
 	}
 
 	@Override
 	public String[] getGCEventTypes() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.gctypes.toArray(new String[gctypes.size()]);
 	}
 
 	@Override
 	public GCEvent[] getAllGCEventsBetween(long start, long end) {
-		// TODO Auto-generated method stub
-		return null;
+        return getGCEventsBetween(getAllGCEvents(),start,end);
 	}
 
-	@Override
+    private GCEvent[] getGCEventsBetween(GCEvent[] allEvents, long start, long end) {
+        if (end < start) {
+            return new GCEvent[]{};
+        }
+        List<GCEvent> events =  new ArrayList<>(100);
+        for (GCEvent e:allEvents) {
+            if (e.getStartTime() > start && e.getEndTime() < end) {
+                events.add(e);
+            }
+        }
+        return events.toArray(new GCEvent[events.size()]);
+    }
+
+    @Override
 	public GCEvent[] getAllGCEventsBetween(String type, long start,
 			long end) {
-		// TODO Auto-generated method stub
-		return null;
+		GCEvent[] x = getAllGCEvents(type);
+        return getGCEventsBetween(x,start,end);
 	}
 	@Override
 	public long getTotalGCTimeMs() {

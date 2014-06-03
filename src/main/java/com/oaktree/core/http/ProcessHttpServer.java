@@ -824,7 +824,12 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                             Object ch = Array.get(v, i);
                             for (String c : clarification.split("[,]")) {
                                 String cname = "get" + Character.toUpperCase(c.charAt(0)) + c.substring(1);
-                                Method x = ofArray.getMethod(cname);
+                                Method x = null;
+                                try {
+                                    x = ofArray.getMethod(cname);
+                                } catch (Exception e) {
+                                    return "Method name "+ cname + " is not found : " + e.getMessage();
+                                }
                                 if (x.getReturnType().equals(double.class) || x.getReturnType().equals(float.class)) {
                                 	value += Text.to4Dp((double)x.invoke(ch))+",";
                                 } else {

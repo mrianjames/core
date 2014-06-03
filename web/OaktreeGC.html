@@ -3,11 +3,27 @@ ${import=OaktreeHeader.html}
 <div id="page-wrapper">
     <div class="row"/>
     <br/>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    GC Summary
+                </div>
+                <div class="panel-body">
+                    <p>Total GC Time: ${service.gc.getTotalGCTimeMs()}</p>
+                    <p>Total Removed: ${java.com.oaktree.core.utils.Text.to2Dp(service.gc.getTotalRemovedB())}</p>
+                </div>
+                <div class="panel-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row"/>
+    <br/>
     <div class="panel-heading">
         Garbage Collection
     </div>
-    Total GC Time: ${service.gc.getTotalGCTimeMs()}
-    Total Removed: ${java.com.oaktree.core.utils.Text.to2Dp(service.gc.getTotalRemovedB())}
+
     <!-- .panel-heading -->
     <div class="panel-body">
         <div class="panel-group" id="accordion">
@@ -23,6 +39,7 @@ ${import=OaktreeHeader.html}
                             <ul class="nav nav-tabs" id="ijtabs">
                                 <li class="active"><a href="#gcdata" data-toggle="tab">GC Data</a></li>
                                 <li><a href="#removedchart" data-toggle="tab">Removed Chart</a></li>
+                                ${for var="gctype" source="service.gc.getGCEventTypes()" template="OaktreeGCEventTypesList.html"}
                             </ul>
 
                             <!-- Tab panes -->
@@ -34,9 +51,10 @@ ${import=OaktreeHeader.html}
                                 </div>
                                 <div class="tab-pane fade in" id="removedchart">
                                     <div class="panel-body">
-                                        ${data-view type="line_chart" options="" template="./web/oaktree/templates/AMLineChart.html" title="RemovedKb" source="service.gc.getAllGCEvents()" source-fields="removedK" key-field="eventTimeMs" x-axis-name="Time" y-axis-name="RemovedK"}
                                     </div>
+                                    ${data-view type="line_chart" options="" template="./web/oaktree/templates/AMLineChart.html" title="RemovedKb" source="service.gc.getAllGCEvents()" source-fields="removedK" key-field="eventTimeMs" x-axis-name="Time" y-axis-name="RemovedK"}
                                 </div>
+                                ${for var="gctype" source="service.gc.getGCEventTypes()" template="OaktreeGCEventTypes.html"}
                             </div>
                         </div>
                     </div>
