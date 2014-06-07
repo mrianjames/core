@@ -40,7 +40,7 @@ public class MemorySnapshot {
 		b.append(", NonHeap: comm:"+Text.bytesToMB(nonheap.getCommitted())+ " max:"+Text.bytesToMB(nonheap.getMax())+" used:"+Text.bytesToMB(nonheap.getUsed()));
 		for (MemoryPoolMXBean m:pools) {
 			MemoryUsage u = m.getUsage();
-			b.append(" [Pool: "+m.getName() + " comm:"+Text.bytesToMB(u.getCommitted())+ " max:"+Text.bytesToMB(u.getMax())+" used;"+Text.bytesToMB(u.getUsed())+"]");
+			b.append(" [Pool: "+m.getName() + " comm:"+Text.bytesToMB(u.getCommitted())+ " max:"+Text.bytesToMB(u.getMax())+" used:"+Text.bytesToMB(u.getUsed())+"]");
 		}
 		return b.toString();
 	}

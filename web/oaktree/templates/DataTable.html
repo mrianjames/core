@@ -11,11 +11,14 @@
             
 	$(document).ready(function() {
 		$('#table_${table_id}').dataTable({
-			"columnDefs": [
+		    "sDom": 'T<"clear">lfrtip',
+		    dom: 'T<"clear">lfrtip',
+		    "columnDefs": [
 			{
 				"render": function ( data, type, row ) {
                     return format(data);
-                }
+                },
+
                 <!--,                "targets": "_all" -->
 			}
 			]

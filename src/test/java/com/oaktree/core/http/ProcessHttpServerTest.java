@@ -26,12 +26,12 @@ public class ProcessHttpServerTest {
 		DispatcherMonitor dispmon = new DispatcherMonitor("DW", dispatcher, scheduler, 60000);
 		dispmon.setDispatchListener(dispservice);
 		dispmon.initialise();dispmon.start();
-		MemoryService ms = new MemoryService(5000);
+		MemoryService ms = new MemoryService(60000);
 		ms.setScheduler(scheduler);
 		ms.initialise();
 		ms.start();
 		
-		GCService s = new GCService("gc.service");
+		GCService s = new GCService("gc.service",scheduler);
 		s.initialise();s.start();
 		ProcessHttpServer server = new ProcessHttpServer(1234);
 		server.addService("gc", s);
