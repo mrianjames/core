@@ -96,8 +96,10 @@ public class GCSnapshot {
             MemoryUsage bmu = membefore.get(key);
             MemoryUsage amu = memafter.get(key);
             removed += bmu.getUsed()-amu.getUsed();
-            double usedPct = amu.getUsed()/amu.getMax();
-            System.out.println(key+" Used now: " + amu.getUsed() + " was: "+bmu.getUsed() + " removed: "+removed + " Used/Max: " + usedPct+"% Used/Comm: " +);
+            double usedMaxPct = amu.getUsed()/amu.getMax();
+            double usedComPct = amu.getUsed()/amu.getCommitted();
+            //TODO if useful add these ones to maps.
+            System.out.println(key+" Used now: " + amu.getUsed() + " was: "+bmu.getUsed() + " removed: "+removed + " Used/Max: " + usedMaxPct+"% Used/Comm: " + usedComPct +"%");
         }
         gcRemovedBytesByType.get(event.getGcName()).addAndGet(removed);
         totalRemoved += removed;

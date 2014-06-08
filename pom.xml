@@ -8,7 +8,7 @@
 		<oaktree.bugzilla>${oaktree.home}:8086</oaktree.bugzilla>		
 		<oaktree.svn>${oaktree.home}:8081</oaktree.svn>
 		<oaktree.svn.project>oaktree_core</oaktree.svn.project>
-		<src.version>1.8</src.version>
+		<src.version>1.7</src.version>
 		<slf4j.version>1.7.5</slf4j.version>		
 	</properties>
 	
