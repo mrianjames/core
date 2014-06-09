@@ -21,6 +21,7 @@ public interface IGCService extends IComponent {
 	public double getTotalRemovedK();
 	public double getTotalRemovedM();
     public GCSnapshot[] getAllSnapshots();
+    public GCSnapshot[] getAllSnapshots(String type);
     public GCSnapshot[] getSnapshotsBetween(long start, long end);
     public long getNumEvents();
 

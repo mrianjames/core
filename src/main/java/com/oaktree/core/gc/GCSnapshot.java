@@ -3,6 +3,8 @@ package com.oaktree.core.gc;
 import com.oaktree.core.utils.Text;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import com.sun.management.GcInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.management.MemoryUsage;
 import java.util.HashMap;
@@ -50,16 +52,19 @@ public class GCSnapshot {
     public long getStart() {
         return start;
     }
+    public String getStartTimeAsString() {
+        return Text.renderTime(start);
+    }
 
     public long getEnd() {
         return end;
     }
 
-    public long getTotalRemovedBytes() {
+    public long getTotalRemovedB() {
         return totalRemoved;
     }
     public long getTotalRemovedK() {
-        return getTotalRemovedBytes()/1024;
+        return getTotalRemovedB()/1024;
     }
     public long getTotalRemovedM() {
         return getTotalRemovedK()/1024;
@@ -82,8 +87,17 @@ public class GCSnapshot {
             gcRemovedBytesByType.put(type,new AtomicLong(0));
         }
     }
+    public long getTotalRemovedK(String type) {
+        AtomicLong al = gcRemovedBytesByType.get(type);
+        if (al != null) {
+            return al.get()/1024;
+        }
+        return 0;
+    }
+    private final static Logger logger = LoggerFactory.getLogger(GCSnapshot.class);
     //handle and apply a gc event from jmx.
     public void onGcEvent(long time, GarbageCollectionNotificationInfo event) {
+        logger.info("OnGCEvent: "+event);
         GcInfo info = event.getGcInfo();
         long duration = info.getDuration();
         gcEventsByType.get(event.getGcName()).incrementAndGet();
@@ -132,6 +146,7 @@ public class GCSnapshot {
     public void clear() {
         numGcEvents = 0;
         gcEventsByType.clear();
+        totalRemoved = 0;
         gcDurationUsByType.clear();
         gcRemovedBytesByType.clear();
         types = new String[]{};

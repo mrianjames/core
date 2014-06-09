@@ -15,10 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -100,10 +97,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
      * @param repl
      * @return
      */
-    private String processDataViewChartRequest(String type,String repl,ResourceContext ctx) throws Exception {
+    private String processDataViewChartRequest(ResourceChunk chunk,String type,String repl,ResourceContext ctx) throws Exception {
         //explode the options from the line...
         String[] options=getOption("options",repl).split("[,]");
-        String source = replaceSourceParams(getOption("source", repl), ctx);
+        String source = replaceSourceParams(chunk,getOption("source", repl), ctx);
         String template = getOption("template", repl);
         String keyField = getOption("key-field", repl);
         String keyFormat = getOption("key-format", repl);
@@ -114,8 +111,8 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             keyFormatter = new SimpleDateFormat(keyFormat);
         }
         
-        String title = checkAndReplaceVars(getOption("title", repl), ctx);
-        String id = checkAndReplaceVars(getOption("id", repl, title+ "LineChart") , ctx).replace(" ","");
+        String title = checkAndReplaceVars(chunk,getOption("title", repl), ctx);
+        String id = checkAndReplaceVars(chunk,getOption("id", repl, title + "LineChart") , ctx).replace(" ","");
         String source_flds=getOption("source-fields", repl); //TODO refactor the use of this. TODO remove spaces etc.
         String sourceFields = "";
         int cols = 0;
@@ -130,7 +127,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             cols++;
             //columns.add(field.substring(br+1,field.length()-1));
         }
-        String[] values = getValue(source+":"+sourceFields,ctx).split(","); //this should get us all our cols in a flat format. we dont want flat...
+        String[] values = getValue(chunk,source+":"+sourceFields,ctx).split(","); //this should get us all our cols in a flat format. we dont want flat...
         if (values.length == 1 && values[0].equals("")) {
         	values = new String[]{};
         }
@@ -362,7 +359,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		VARIABLE,CODE,PLAIN,BINARY,IMPORT;
 	}
 	private static class ResourceChunk {
-		public ResourceChunk(ResourceChunkType ct, String string) {
+        private String desc;
+
+        public ResourceChunk(ResourceChunkType ct, String string) {
 			this.chunkType = ct;
 			this.string = string;
 			this.bytes = string.getBytes();
@@ -371,6 +370,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			this.chunkType = type;
 			this.bytes = bites;
 		}
+        private Resource resource;
+        public void setResource(Resource resource) {
+            this.resource = resource;
+        }
 		private ResourceChunkType chunkType;
 		public ResourceChunkType getChunkType() {
 			return chunkType;
@@ -393,7 +396,21 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		public String toString() {
 			return chunkType.name() + " "+ (isBinary() ? (bytes.length + " bytes.") : isVariable() ? string : (string.length() + " chars"));
 		}
-	}
+
+        public Resource getResource() {
+            return resource;
+        }
+
+        public String getDesc() {
+            if (chunkType.equals(ResourceChunkType.IMPORT)) {
+                return string;
+            }
+            if (chunkType.equals(ResourceChunkType.CODE)) {
+                return string;
+            }
+            return "";
+        }
+    }
 
 	private static class Resource {
 		private String path;
@@ -477,6 +494,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			int i = 0;
 			for (ResourceChunk chunk:chunks) {
 				logger.info("Chunk "+i+": " + chunk.toString());
+                chunk.setResource(this);
 				i++;
 			}
 			//TODO other syntaxes?
@@ -487,22 +505,22 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 				chunks.clear();
 				FileReader fr = new FileReader(file);
 				if (isText(type)) {
-					logger.info("Resource is textual: " + type);
+					logger.info("Resource "+file.getName()+" is textual: " + type);
 					String text = readTextFromResource(file.getAbsolutePath());
 					parseResource(text); //TODO this needs to chunk it up
 
-					logger.info("Loaded resource of " + chunks.size() + " chunks");
+					logger.info("Loaded resource "+file.getName()+" of " + chunks.size() + " chunks");
 
 				} else {
 
 					// binary and other files.
-					logger.info("Resource is binary: " + type + " length: "
+					logger.info("Resource "+file.getName()+" is binary: " + type + " length: "
 							+ file.length());
 					Path path = Paths.get(file.getAbsolutePath());
 					byte[] bites = Files.readAllBytes(path);
 					ResourceChunk chunk = new ResourceChunk(ResourceChunkType.BINARY,bites);
 					chunks.add(chunk);
-					logger.info("Loaded resource of " + bites.length);
+					logger.info("Loaded resource "+file.getName()+"of " + bites.length);
 				}
 
 			} catch (Exception e) {
@@ -622,7 +640,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                 String template = getOption("template",chunk.getString());
                 String source = getOption("source",chunk.getString());
                 String var = getOption("var",chunk.getString());
-                String strValues= getValue(source, ctx);
+                String strValues= getValue(chunk,source, ctx);
                 String[] values = strValues.split(",");
                 Resource rt = resources.get(template);
                 if (rt != null) {
@@ -646,22 +664,22 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 
 	private String processVariableReplacement(ResourceChunk chunk,ResourceContext ctx) throws Exception {
 		String repl = chunk.getString();
-			String value = getValue(repl,ctx);
+			String value = getValue(chunk,repl,ctx);
 			return value;
 	}
 
-	private String getValue(String repl, ResourceContext ctx) throws Exception {
+	private String getValue(ResourceChunk chunk,String repl, ResourceContext ctx) throws Exception {
 		String value= "";
 		if (repl.startsWith(ENV)) {
 			value = processEnvironmentVariable(repl,ctx);
 		} else if (repl.startsWith(JAVA)) {
-            value = processJavaStaticMethod(repl,ctx);
+            value = processJavaStaticMethod(chunk,repl,ctx);
 		}else if (repl.startsWith(SYS)) {
 			value = System.getProperty(chunkTextToVariableName(repl));
 		} else if (repl.startsWith(DATA_VIEW)) {
-            value = this.processDataViewRequest(repl,ctx);
+            value = this.processDataViewRequest(chunk,repl,ctx);
         } else if (repl.startsWith(DEFINE)) {
-            value = this.processDefineVariable(repl,ctx);
+            value = this.processDefineVariable(chunk,repl,ctx);
         }else if (repl.startsWith(TABLE_BINDING)) {
 			throw new IllegalStateException("Deprecated api. pls upgrade to "+DATA_VIEW);
 		} else if (repl.startsWith(PARAM)) {
@@ -678,7 +696,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         } else if (repl.startsWith(VALUE)) {
             value = repl.substring(VALUE.length());
         } else if (repl.startsWith(SERVICE)) {
-            value = processService(repl,ctx);
+            value = processService(chunk,repl,ctx);
 		} else {
             //mmmm. dodgy.
             //value = processService(repl,ctx);
@@ -688,12 +706,12 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		return value;
 	}
 
-    private String processDefineVariable(String repl, ResourceContext ctx) throws Exception {
+    private String processDefineVariable(ResourceChunk chunk,String repl, ResourceContext ctx) throws Exception {
 		String expr = repl.substring(repl.indexOf(".",6)+1);
 		String[] bits = expr.split("=");
 		String var = bits[0];
 		String value = bits[1];
-		value = getValue(value,ctx);
+		value = getValue(chunk,value,ctx);
 		ctx.setVar(var, value);
 		return "";
 	}
@@ -709,21 +727,21 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         return value;
     }
 
-    private String processJavaStaticMethod(String repl, ResourceContext ctx) throws Exception {
+    private String processJavaStaticMethod(ResourceChunk chunk,String repl, ResourceContext ctx) throws Exception {
         String value = "";
         //${java.java.lang.System.currentTimeMillis()}
         String clazz = chunkTextToJavaClassName(repl);
         String method = chunkTextToJavaMethodName(repl);
         //TODO clarifications.
-        String[] args = chunkTextToJavaArgs(repl,ctx);
+        String[] args = chunkTextToJavaArgs(chunk,repl,ctx);
         
-        Object v = executeMethodWithArgs(null,Class.forName(clazz), method, args);
+        Object v = executeMethodWithArgs(chunk,null,Class.forName(clazz), method, args);
         value = String.valueOf(v);
         //TODO arrays...
         return value;
     }
 
-    private String[] chunkTextToJavaArgs(String repl,ResourceContext ctx) throws Exception {
+    private String[] chunkTextToJavaArgs(ResourceChunk chunk,String repl,ResourceContext ctx) throws Exception {
     	repl = repl.substring(repl.indexOf('(')+1,repl.lastIndexOf(')'));
     	if (repl.length() < 1) {
     		return new String[]{};
@@ -732,7 +750,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 		String[] values = new String[bits.length];
 		int i = 0;
 		for (String bit:bits) {
-			String v = getValue(bit,ctx);
+			String v = getValue(chunk,bit,ctx);
 			values[i] = v;
 			i++;
 		}
@@ -760,7 +778,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         return value;
     }
 
-    private String processService(String phrase, ResourceContext ctx) throws Exception {
+    private String processService(ResourceChunk chunk,String phrase, ResourceContext ctx) throws Exception {
         String repl = phrase;
 
         if (phrase.startsWith(SERVICE)) {
@@ -791,12 +809,12 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             }
             for (int i = 0; i <pms.length;i++) {
                 if (pms[i].contains(":")) {
-                    pms[i] = getValue(pms[i],ctx);
+                    pms[i] = getValue(chunk,pms[i],ctx);
                 }
             }
             Object o = this.services.get(service);
             if (o != null) {
-                Object v = executeMethodWithArgs(o,o.getClass(),method,pms);
+                Object v = executeMethodWithArgs(chunk,o,o.getClass(),method,pms);
                 if (clarification == null) {
                     
                     //handle non castable things....like array..
@@ -828,7 +846,9 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                                 try {
                                     x = ofArray.getMethod(cname);
                                 } catch (Exception e) {
-                                    return "Method name "+ cname + " is not found : " + e.getMessage();
+                                    //return "Method name "+ cname + " is not found : " + e.getMessage();
+                                    throw new IllegalStateException("Method name "+cname + " is not found. Check variable names exist on object "+ch.getClass()
+                                    .getName() + " from chunk " + chunk.getDesc() + " in resource " + chunk.getResource().getPath());
                                 }
                                 if (x.getReturnType().equals(double.class) || x.getReturnType().equals(float.class)) {
                                 	value += Text.to4Dp((double)x.invoke(ch))+",";
@@ -857,41 +877,42 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
     /**
      * On an object, execute a method with args we have specified - we will cast as we can.
      * THIS WILL NOT WORK IF YOU HAVE A METHOD NAME WITH SAME NUM ARGS OF DIFFERENT TYPES.
+     *
      * @param o
      * @param method
      * @param pms
      * @return
      * @throws Exception
      */
-    private Object executeMethodWithArgs(Object o,Class clazz,String method, String[] pms) throws Exception {
-    	Method m = null;
+    private Object executeMethodWithArgs(ResourceChunk chunk, Object o, Class clazz, String method, String[] pms) throws Exception {
+        Method m = null;
         Object[] vars = new Object[pms.length];
         for (Method mtd : clazz.getMethods()) {
             if (mtd.getName().equals(method)) {
                 Class<?>[] ptypes = mtd.getParameterTypes();
-                if (ptypes.length == pms.length && canCastAllArgs(pms,ptypes)) {
+                if (ptypes.length == pms.length && canCastAllArgs(pms, ptypes)) {
                     //TODO better checking.
                     int i = 0;
                     for (Class<?> type : ptypes) {
-                    	try {
-                    		vars[i] = type.cast(pms[i]);
-                    	} catch (Exception e) {
-                    		//try some common ops...
-                    		if (type.equals(Long.class) || type.equals(long.class)) {
-                    			vars[i] = Long.valueOf(pms[i]);
-                    		} else if (type.equals(Double.class)|| type.equals(double.class)) {
-                    			vars[i] = Double.valueOf(pms[i]);
-                    		} else if (type.equals(Integer.class)|| type.equals(int.class)) {
-                    			vars[i] = Integer.valueOf(pms[i]);
-                    		} else if (type.equals(Short.class)|| type.equals(short.class)) {
-                    			vars[i] = Short.valueOf(pms[i]);
-                    		} else if (type.equals(Float.class)|| type.equals(float.class)) {
-                    			vars[i] = Float.valueOf(pms[i]);
-                    		} else if (type.equals(Boolean.class)|| type.equals(boolean.class)) {
-                    			vars[i] = Boolean.valueOf(pms[i]);
-                    		}
-                    	}
-                    	
+                        try {
+                            vars[i] = type.cast(pms[i]);
+                        } catch (Exception e) {
+                            //try some common ops...
+                            if (type.equals(Long.class) || type.equals(long.class)) {
+                                vars[i] = Long.valueOf(pms[i]);
+                            } else if (type.equals(Double.class) || type.equals(double.class)) {
+                                vars[i] = Double.valueOf(pms[i]);
+                            } else if (type.equals(Integer.class) || type.equals(int.class)) {
+                                vars[i] = Integer.valueOf(pms[i]);
+                            } else if (type.equals(Short.class) || type.equals(short.class)) {
+                                vars[i] = Short.valueOf(pms[i]);
+                            } else if (type.equals(Float.class) || type.equals(float.class)) {
+                                vars[i] = Float.valueOf(pms[i]);
+                            } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                                vars[i] = Boolean.valueOf(pms[i]);
+                            }
+                        }
+
                         i++;
                     }
                     m = mtd;
@@ -899,12 +920,19 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
                 }
             }
         }
-        if (o != null) {
-        	return m.invoke(o, vars);
-        } else {
-        	return m.invoke(null, vars);
+        try {
+            if (o != null) {
+                return m.invoke(o, vars);
+            } else {
+                return m.invoke(null, vars);
+            }
+        } catch (Exception e) {
+            String oerr = (clazz != null ? ("<b>"+clazz.getName()+"</b>") : "UknownObject")+ "<br/>";
+            String merr = (m != null ? ("<b>"+m.getName()+"</b>") : "MethodNotFound: <b>" + method)+ "</b><br/>";
+            String cerr = chunk.getResource().path + " chunk: " + chunk.getDesc() + "<br/>";
+            throw new IllegalStateException("<font color='red'>Cannot process method..." + oerr + " " + merr + " args: " + Arrays.toString(vars) + " from " + cerr+"</font>");
         }
-	}
+    }
 
 	private boolean canCastAllArgs(String[] pms, Class<?>[] ptypes) {
 		//TODO better checking.
@@ -947,27 +975,27 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
      * @param repl
      * @return
      */
-    private String processDataViewRequest(String repl,ResourceContext ctx) throws Exception {
+    private String processDataViewRequest(ResourceChunk chunk,String repl,ResourceContext ctx) throws Exception {
         String type = getDataViewType(repl);
         if (type.equals(dataViewLineChart)) {
-            return processDataViewChartRequest(CHART_TYPE_LINE,repl,ctx);
+            return processDataViewChartRequest(chunk,CHART_TYPE_LINE,repl,ctx);
         } else if (type.equals(dataViewBarChart)) {
-            return processDataViewChartRequest(CHART_TYPE_BAR,repl,ctx);
+            return processDataViewChartRequest(chunk,CHART_TYPE_BAR,repl,ctx);
         } else if (type.equals(dataViewPaginatedTable)) {
-            return processDataViewPaginatedTableRequest(repl,ctx);
+            return processDataViewPaginatedTableRequest(chunk,repl,ctx);
         }
         throw new IllegalArgumentException("Invalid template type.");
     }
 
     //${data-view type="paginated_table" options="" title="Heap" source="memory.getSnapshots(Heap)" source-fields="time(Time),init(Init),committed(Committed),used(Used),max(Max)"}
-    private String processDataViewPaginatedTableRequest(String repl,ResourceContext ctx) throws Exception {
+    private String processDataViewPaginatedTableRequest(ResourceChunk chunk,String repl,ResourceContext ctx) throws Exception {
         //explode the options from the line...
         String[] options=getOption("options",repl).split("[,]");
-        String source = replaceSourceParams(getOption("source", repl), ctx);
-        String title = checkAndReplaceVars(getOption("title",repl),ctx);
+        String source = replaceSourceParams(chunk,getOption("source", repl), ctx);
+        String title = checkAndReplaceVars(chunk,getOption("title", repl),ctx);
         String template = getOption("template",repl);
         String columns = getOption("columns",repl);
-        String id = checkAndReplaceVars(getOption("id",repl,title+"PagTable"),ctx).replace(" ","");
+        String id = checkAndReplaceVars(chunk,getOption("id", repl, title + "PagTable"),ctx).replace(" ","");
         String source_flds=getOption("source-fields",repl); //TODO refactor the use of this. TODO remove spaces etc.
         String sourceFields = "";
         List<String> dcolumns = new ArrayList<String>();
@@ -983,7 +1011,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	            dcolumns.add(field.substring(br+1,field.length()-1));
 	        }
         }
-        String[] values = getValue(source+":"+sourceFields,ctx).split(",");
+        String[] values = getValue(chunk,source+":"+sourceFields,ctx).split(",");
         //TODO fields.
         String code = makePaginatedTableCode(id, title, values, dcolumns,template);
         return code;
@@ -993,7 +1021,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 
  
 
-    private String replaceSourceParams(String source, ResourceContext ctx) throws Exception {
+    private String replaceSourceParams(ResourceChunk chunk,String source, ResourceContext ctx) throws Exception {
         int s = source.indexOf("(");
         int e = source.indexOf(")");
         if (s < 0 || e < 0) { //no params. maybe something like env.
@@ -1002,7 +1030,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         String args = source.substring(s+1,e);
         String x = "";
         for (String arg:args.split("[,]")) {
-            x = x+getValue(arg,ctx)+",";
+            x = x+getValue(chunk,arg,ctx)+",";
         }
         if (x.length() > 0) {
             x = x.substring(0,x.length()-1);
@@ -1010,10 +1038,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
         return source.substring(0,s+1) + x+source.substring(e);
     }
 
-    private String checkAndReplaceVars(String repl, ResourceContext ctx) {
+    private String checkAndReplaceVars(ResourceChunk chunk,String repl, ResourceContext ctx) {
         if (repl.contains(".")) {
             try {
-                return getValue(repl, ctx);
+                return getValue(chunk,repl, ctx);
             } catch (Exception e) {
                 logger.error("Cannot parse replacement "+repl,e);
                 return null;
@@ -1151,7 +1179,11 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			type = ICO;
 		} else if (suffix.equals("png")) {
 			type = PNG;
-		} else if (suffix.equals("gif")) {
+		} else if (suffix.equals("jpg")) {
+            type = JPEG;
+        } else if (suffix.equals("jpeg")) {
+            type = JPEG;
+        }else if (suffix.equals("gif")) {
 			type = GIF;
 		} else if (suffix.equals("js")) {
 			type = JAVASCRIPT;
@@ -1288,9 +1320,8 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			//String content = request.getContent();
 			
 			if (isDebug && isText(resource.getType())) {
-				logger.info("Reloading resource as debug is enabled");
+				logger.info("Reloading resource "+resource.getPath()+" as debug is enabled");
 				loadResource(resource);
-				
 			}
 			ResourceContext ctx = new ResourceContext();
             ctx.params = params;
@@ -1300,9 +1331,21 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			
 			body.flush();
 			body.close();
-			logger.info("Processed");
+			//logger.info("Processed ");
 		} catch (Exception e) {
 			e.printStackTrace();
+            OutputStream body = t.getResponseBody();
+            StringBuilder b = new StringBuilder(1024);
+            b.append("Unexpected Error occured: ");
+            b.append(e.getMessage());
+            for (StackTraceElement ste:e.getStackTrace()) {
+                b.append("\n\t");
+                b.append(ste.toString());
+            }
+            t.sendResponseHeaders(200, b.toString().getBytes().length);
+            body.write(b.toString().getBytes());
+            body.close();
+            return;
 		}
 	}
 
