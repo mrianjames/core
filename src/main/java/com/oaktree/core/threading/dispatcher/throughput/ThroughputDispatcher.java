@@ -437,6 +437,16 @@ public class ThroughputDispatcher extends AbstractComponent implements IDispatch
     }
 
     @Override
+    public int getCurrentThreads() {
+        return this.threads;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return this.threads;
+    }
+
+    @Override
 	public void setKeys(String[] keys) {
 		for (String key:keys) {
 			this.createQueue(key);

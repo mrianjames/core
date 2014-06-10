@@ -85,4 +85,16 @@ public abstract class AbstractDispatcher implements IDispatcher{
     public void removeKeys(String[] keys) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
+
+
+    @Override
+    public int getCurrentThreads() {
+        return 0;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return 0;
+    }
+
 }

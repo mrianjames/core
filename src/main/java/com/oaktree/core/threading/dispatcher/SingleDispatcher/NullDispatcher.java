@@ -27,7 +27,17 @@ public class NullDispatcher extends AbstractDispatcher {
         return allKeys.toArray(new String[allKeys.size()]);
     }
 
-	@Override
+    @Override
+    public int getCurrentThreads() {
+        return 0;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return 0;
+    }
+
+    @Override
 	public void setThreads(int i) {		
 	}
 }

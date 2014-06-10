@@ -118,4 +118,16 @@ public interface IDispatcher {
      * @return keys registered in this dispatcher currently
      */
     public String[] getKeys();
+
+    /**
+     * Get current thread count.
+     * @return
+     */
+    public int getCurrentThreads();
+
+    /**
+     * Get max thread count.
+     * @return
+     */
+    public int getMaxThreads();
 }

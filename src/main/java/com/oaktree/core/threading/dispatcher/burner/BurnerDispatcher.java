@@ -16,6 +16,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 /**
+ * TODO review for removal...
+ *
  * Oaktree Designs Ltd.
  * User: ij
  * Date: 30/06/11
@@ -28,6 +30,16 @@ public class BurnerDispatcher implements IDispatcher, Runnable {
     private final Deque<Runnable> queue = new ArrayDeque<Runnable>(1000000);
     private boolean run = true;
     private final static Logger logger = LoggerFactory.getLogger(BurnerDispatcher.class);
+
+    @Override
+    public int getCurrentThreads() {
+        return 1;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return 1;
+    }
 
     public BurnerDispatcher() {
     }

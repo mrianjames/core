@@ -51,8 +51,20 @@ public class MappedDispatcher implements IDispatcher {
 			this.keys.add(key);
 		}
 	}
-	
-	@Override
+
+
+    @Override
+    public int getCurrentThreads() {
+        return threadCount;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return threadCount;
+    }
+
+
+    @Override
 	public void setKeys(String[] keys) {
 		for (String key:keys) {
 			this.keys.add(key);

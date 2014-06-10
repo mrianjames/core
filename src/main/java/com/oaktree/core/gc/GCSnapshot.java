@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.management.MemoryUsage;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,6 +42,27 @@ public class GCSnapshot {
     private Map<String,AtomicLong> gcEventsByType = new HashMap<>(10);
     private Map<String,AtomicLong> gcRemovedBytesByType = new HashMap<>(10);
     private Map<String,AtomicLong> gcDurationUsByType = new HashMap<String,AtomicLong>(10);
+    public long getRemovedBytesByType(String type) {
+        AtomicLong l = gcRemovedBytesByType.get(type);
+        if (l == null) {
+            return 0;
+        }
+        return l.get();
+    }
+    public long getEventsByType(String type) {
+        AtomicLong l = gcEventsByType.get(type);
+        if (l == null) {
+            return 0;
+        }
+        return l.get();
+    }
+    public long getDurationUsByType(String type) {
+        AtomicLong l = gcDurationUsByType.get(type);
+        if (l == null) {
+            return 0;
+        }
+        return l.get();
+    }
     private long gcDuration = 0;
     private long start = 0;
     private long end = 0;
@@ -97,7 +119,7 @@ public class GCSnapshot {
     private final static Logger logger = LoggerFactory.getLogger(GCSnapshot.class);
     //handle and apply a gc event from jmx.
     public void onGcEvent(long time, GarbageCollectionNotificationInfo event) {
-        logger.info("OnGCEvent: "+event);
+        logger.info("OnGCEvent: "+event.getGcName() + " (types: " + Arrays.toString(this.getTypes())+")");
         GcInfo info = event.getGcInfo();
         long duration = info.getDuration();
         gcEventsByType.get(event.getGcName()).incrementAndGet();

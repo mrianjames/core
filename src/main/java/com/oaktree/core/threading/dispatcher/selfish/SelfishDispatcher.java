@@ -76,6 +76,18 @@ public class SelfishDispatcher implements IDispatcher {
      * Number of threads to use.
      */
     private int threads = 4;
+
+
+    @Override
+    public int getCurrentThreads() {
+        return threads;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return threads;
+    }
+
     /**
      * Set of initial keys/queues to define.
      */

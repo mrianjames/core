@@ -58,8 +58,8 @@ public class DispatcherMonitor extends AbstractComponent implements Runnable{
         String[] keys = dispatcher.getKeys();
         int keyIncrease = keys.length - prevKeyCount;
         double keyIncreaseRate = (double)keyIncrease / ((double)interval/1000d);
-        double queuedIncreaseRate = totalQueuedIncrease / (interval/1000);
-        double execIncreaseRate = totalExecIncrease / (interval/1000);
+        double queuedIncreaseRate = (double)totalQueuedIncrease / (interval/1000d);
+        double execIncreaseRate = (double)totalExecIncrease / (interval/1000d);
         long maxExec = 0;
         long maxQueued = 0;
         String topQueued = null;
@@ -121,14 +121,14 @@ public class DispatcherMonitor extends AbstractComponent implements Runnable{
         prevKeyCount = keys.length;
         prevExecCount = totalExecCount;
         prevQueuedCount = totalQueuedCount;
-        
+
         if (dispatchListener != null) {
-        	DispatchSnapshot snapshot = new DispatchSnapshot(timeSource.getTimeOfDay(),totalExecCount,
-        			totalQueuedCount,totalQueuedIncrease,totalExecIncrease,keyIncrease,keyIncreaseRate,
-        			queuedIncreaseRate,execIncreaseRate,
-        			topExec,topQueued);
-        	dispatchListener.onDispatchStatistics(snapshot);
-        		
+            DispatchSnapshot snapshot = new DispatchSnapshot(dispatcher.getName(),dispatcher.getClass().getName(),timeSource.getTimeOfDay(),totalExecCount,
+                    totalQueuedCount,totalQueuedIncrease,totalExecIncrease,keyIncrease,keyIncreaseRate,
+                    queuedIncreaseRate,execIncreaseRate,
+                    topExec,topQueued,keys.length);
+            dispatchListener.onDispatchStatistics(this.dispatcher,snapshot);
+
         }
     }
     private IDispatcherListener dispatchListener;

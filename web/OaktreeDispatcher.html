@@ -3,8 +3,23 @@ ${import=OaktreeHeader.html}
 <div id="page-wrapper">
     <div class="row"/>
     <br/>
-    <div class="panel-heading">
-        Dispatcher Statistics
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    Dispatcher Summary
+                </div>
+                <div class="panel-body">
+                    <p>Name: ${service.dispatcher.getDispatcherName()}</p>
+                    <p>Type: ${service.dispatcher.getDispatcherType()}</p>
+                    <p>Threads: ${service.dispatcher.getDispatcherCurrentThreads()}</p>
+                    <p>Max: ${service.dispatcher.getDispatcherMaxThreads()}</p>
+
+                </div>
+                <div class="panel-footer">
+                </div>
+            </div>
+        </div>
     </div>
     <!-- .panel-heading -->
     <div class="panel-body">
@@ -38,7 +53,7 @@ ${import=OaktreeHeader.html}
                                 </div>
                                 <div class="tab-pane fade" id="dispatcherdata">
                                     <div class="panel-body">
-                                        ${data-view type="paginated_table" options="" title="Dispatcher" source="service.dispatcher.getSnapshots()" source-fields="timestampAsString(Time),totalExecCount(TotExec),totalQueuedCount(TotQueue),execIncreaseRate(ExecIncRate),queuedIncreaseRate(QueuedIncRate),keyIncreaseRate(KeyIncRate)" }
+                                        ${data-view type="paginated_table" options="" title="Dispatcher" source="service.dispatcher.getSnapshots()" source-fields="timestampAsString(Time),keyCount(Keys),totalExecCount(TotExec),totalQueuedCount(TotQueue),execIncreaseRateStr(ExecIncRate p/s),queuedIncreaseRateStr(QueuedIncRate p/s),keyIncreaseRateStr(KeyIncRate p/s)" }
                                     </div>
                                 </div>
                             </div>

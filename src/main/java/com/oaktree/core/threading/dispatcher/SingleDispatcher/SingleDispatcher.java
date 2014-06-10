@@ -79,4 +79,15 @@ public class SingleDispatcher extends AbstractDispatcher{
 	public void setThreads(int i) {		
 	}
 
+
+    @Override
+    public int getCurrentThreads() {
+        return 1;
+    }
+
+    @Override
+    public int getMaxThreads() {
+        return 1;
+    }
+
 }

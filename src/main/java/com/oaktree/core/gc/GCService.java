@@ -27,6 +27,8 @@ import com.oaktree.core.time.ITime;
 import com.oaktree.core.time.ITimeScheduler;
 import com.oaktree.core.time.JavaTime;
 
+import com.oaktree.core.utils.Text;
+import com.sun.management.GcInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +71,26 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
     private IPool<GCSnapshot> pool = new SimplePool<>(10*60*60,snapshotFactory);
     private List<GCSnapshot> snapshots = new CopyOnWriteArrayList<>();
     private List<String> gctypes = new ArrayList<String>();
+    private long lastGcTime = 0;
+    private GarbageCollectionNotificationInfo lastGC;
+    public String getLastGcTime() {
+        return Text.renderTime(lastGcTime);
+    }
+    public String getLastGCEvent() {
+        if (lastGC == null) {
+            return Text.EMPTY_STRING;
+        }
+        StringBuilder b = new StringBuilder(256);
+        //b.setLength(0);
+        b.append("There was a ");
+        b.append(lastGC.getGcCause());
+        b.append(" on ");
+        b.append(lastGC.getGcName());
+        b.append(" caused by ");
+        b.append(lastGC.getGcAction());
+
+        return b.toString();
+    }
 
     //total gc duration in us.
     private AtomicLong cumulativeGCTime = new AtomicLong(0);
@@ -141,6 +163,8 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
                             currentSnapshot.onGcEvent(now,info);
                             cumulativeGCTime.addAndGet(info.getGcInfo().getDuration());
                             numGcEvents.incrementAndGet();
+                            lastGC = info;
+                            lastGcTime = now;
 
 	                    }
                 	} catch (Throwable t) {
@@ -172,8 +196,14 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
 
 	@Override
 	public long getTotalGCTimeMs() {
-		return cumulativeGCTime.get();
+		return cumulativeGCTime.get()/1000;
 	}
+
+    @Override
+    public long getTotalGCTimeUs() {
+        return cumulativeGCTime.get();
+    }
+
 	@Override
 	public double getTotalRemovedB() {
 		return totalRemovedB.get();
@@ -210,12 +240,12 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
 
     @Override
     public void run() {
-        if (currentSnapshot.getNumGcEvents() > 0) {
-            logger.info("GCService: " + currentSnapshot);
-        }
         long removed = currentSnapshot.getTotalRemovedB();
         totalRemovedB.addAndGet(removed);
-        snapshots.add(getSnapshotObject(currentSnapshot));
+        if (currentSnapshot.getNumGcEvents() > 0) {
+            logger.info("GCService: " + currentSnapshot);
+            snapshots.add(getSnapshotObject(currentSnapshot));
+        }
         currentSnapshot.clear();
     }
 

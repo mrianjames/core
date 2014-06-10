@@ -61,6 +61,7 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 	private final static String PNG = "image/png";
 	private final static String ICO = "image/x-icon";
 	private final static String SVG = "image/svg+xml";
+    private final static String SWF = "image/swf";
 	private final static String WOFF = "application/x-font-woff";
 	private final static String TTF = "application/x-font-ttf";// or //
 	boolean isDebug = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("jdwp") >= 0;												// "application/x-font-truetype"
@@ -816,7 +817,10 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
             if (o != null) {
                 Object v = executeMethodWithArgs(chunk,o,o.getClass(),method,pms);
                 if (clarification == null) {
-                    
+                    if (v == null) {
+                        logger.warn("Response of " + method + " on " + o.getClass() + " object was null.");
+                        return Text.EMPTY_STRING;
+                    }
                     //handle non castable things....like array..
                     if (v.getClass().isArray()) {
                         int sz = Array.getLength(v);
@@ -1181,6 +1185,8 @@ public class ProcessHttpServer extends AbstractComponent implements HttpHandler 
 			type = PNG;
 		} else if (suffix.equals("jpg")) {
             type = JPEG;
+        } else if (suffix.equals("swf")) {
+            type = SWF;
         } else if (suffix.equals("jpeg")) {
             type = JPEG;
         }else if (suffix.equals("gif")) {
