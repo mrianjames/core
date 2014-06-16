@@ -19,6 +19,18 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by ianjames on 04/06/2014.
  */
 public class GCSnapshot {
+
+    private final static Logger logger = LoggerFactory.getLogger(GCSnapshot.class);
+
+
+    private long numGcEvents = 0;
+    private Map<String,GCMemoryAreaSnapshot> memAreaSnapshots = new HashMap<String,GCMemoryAreaSnapshot>(2);
+    private long gcDuration = 0;
+    private long start = 0;
+    private long end = 0;
+    private long totalRemoved = 0;
+    private String[] types = new String[]{};
+
     public GCSnapshot(GCSnapshot sn) {
         this.set(sn);
     }
@@ -29,43 +41,23 @@ public class GCSnapshot {
         }
         this.numGcEvents = sn.numGcEvents;
         this.totalRemoved = sn.totalRemoved;
-        this.gcEventsByType.putAll(sn.gcEventsByType);
-        this.gcDurationUsByType.putAll(sn.gcDurationUsByType);
-        this.gcRemovedBytesByType.putAll(sn.gcRemovedBytesByType);
+        for (GCMemoryAreaSnapshot s:sn.getAreaSnapshots().values()) {
+            this.memAreaSnapshots.put(s.getName(),new GCMemoryAreaSnapshot(s)); //TODO
+        }
+
         this.start = sn.start;
         this.end = sn.end;
         this.gcDuration = sn.gcDuration;
+        this.types = sn.getTypes();
     }
 
     public GCSnapshot() {}
-    private long numGcEvents = 0;
-    private Map<String,AtomicLong> gcEventsByType = new HashMap<>(10);
-    private Map<String,AtomicLong> gcRemovedBytesByType = new HashMap<>(10);
-    private Map<String,AtomicLong> gcDurationUsByType = new HashMap<String,AtomicLong>(10);
-    public long getRemovedBytesByType(String type) {
-        AtomicLong l = gcRemovedBytesByType.get(type);
-        if (l == null) {
-            return 0;
-        }
-        return l.get();
+    public GCMemoryAreaSnapshot getMemoryAreaSnapshot(String type) {
+        return memAreaSnapshots.get(type);
     }
-    public long getEventsByType(String type) {
-        AtomicLong l = gcEventsByType.get(type);
-        if (l == null) {
-            return 0;
-        }
-        return l.get();
+    public Map<String,GCMemoryAreaSnapshot> getAreaSnapshots() {
+        return memAreaSnapshots;
     }
-    public long getDurationUsByType(String type) {
-        AtomicLong l = gcDurationUsByType.get(type);
-        if (l == null) {
-            return 0;
-        }
-        return l.get();
-    }
-    private long gcDuration = 0;
-    private long start = 0;
-    private long end = 0;
 
     public long getGcDuration() {
         return gcDuration;
@@ -96,34 +88,23 @@ public class GCSnapshot {
         return numGcEvents;
     }
 
-    private long totalRemoved = 0;
-    private String[] types = new String[]{};
     public String[] getTypes() {
         return this.types;
     }
     public GCSnapshot(String[] types) {
         this.types = types;
         for (String type:types) {
-            gcEventsByType.put(type,new AtomicLong(0));
-            gcDurationUsByType.put(type,new AtomicLong(0));
-            gcRemovedBytesByType.put(type,new AtomicLong(0));
+            memAreaSnapshots.put(type,new GCMemoryAreaSnapshot(0,type,0,0,0,0d,0d ));
         }
     }
-    public long getTotalRemovedK(String type) {
-        AtomicLong al = gcRemovedBytesByType.get(type);
-        if (al != null) {
-            return al.get()/1024;
-        }
-        return 0;
-    }
-    private final static Logger logger = LoggerFactory.getLogger(GCSnapshot.class);
+
+
     //handle and apply a gc event from jmx.
-    public void onGcEvent(long time, GarbageCollectionNotificationInfo event) {
+    public synchronized void onGcEvent(long time, GarbageCollectionNotificationInfo event) {
         logger.info("OnGCEvent: "+event.getGcName() + " (types: " + Arrays.toString(this.getTypes())+")");
         GcInfo info = event.getGcInfo();
         long duration = info.getDuration();
-        gcEventsByType.get(event.getGcName()).incrementAndGet();
-        gcDurationUsByType.get(event.getGcName()).addAndGet(duration);
+        GCMemoryAreaSnapshot mas = memAreaSnapshots.get(event.getGcName());
 
         long removed = 0;
         Map<String, MemoryUsage> membefore = info.getMemoryUsageBeforeGc();
@@ -131,13 +112,23 @@ public class GCSnapshot {
         for (String key:membefore.keySet()) {
             MemoryUsage bmu = membefore.get(key);
             MemoryUsage amu = memafter.get(key);
-            removed += bmu.getUsed()-amu.getUsed();
-            double usedMaxPct = amu.getUsed()/amu.getMax();
-            double usedComPct = amu.getUsed()/amu.getCommitted();
-            //TODO if useful add these ones to maps.
-            System.out.println(key+" Used now: " + amu.getUsed() + " was: "+bmu.getUsed() + " removed: "+removed + " Used/Max: " + usedMaxPct+"% Used/Comm: " + usedComPct +"%");
+            long aremoved = bmu.getUsed()-amu.getUsed();
+            removed += aremoved;
+            double usedMaxPct = ((double)aremoved/(double)amu.getMax())*100d;
+            double usedComPct = ((double)aremoved/(double)amu.getCommitted())*100d;
+            double wasCap = ((double)bmu.getUsed()/(double)bmu.getMax())*100d;
+            double isCap = ((double)amu.getUsed()/(double)amu.getMax())*100d;
+            System.out.println(key+" max: "+amu.getMax()+" comm: "+amu.getCommitted()+"Used now: " + amu.getUsed() + " was: "+bmu.getUsed() + " removed: "+(bmu.getUsed()-amu.getUsed()) + " Used/Max: " + Text.to2Dp(usedMaxPct)+"% Used/Comm: " + Text.to2Dp(usedComPct) +"% CapacityBefore: " + Text.to2Dp(wasCap) + "% CapacityNow: " + Text.to2Dp(isCap) + "%.");
+            mas.setUsedMaxPct(usedMaxPct);
+            mas.setUsedComPct(usedComPct);
+            mas.setWasCapacity(wasCap);
+            mas.setIsCapacity(isCap);
+            mas.setStartTime(time);
+            mas.add(1,removed,duration);
         }
-        gcRemovedBytesByType.get(event.getGcName()).addAndGet(removed);
+        System.out.println("TotalRemoved: "+removed +", " + Text.to2Dp(((double)removed/1024d/1024d)) + "MB");
+        mas.add(1, duration, removed);
+
         totalRemoved += removed;
         gcDuration += duration;
         if (start == 0) {
@@ -154,23 +145,19 @@ public class GCSnapshot {
         for (String type: this.types) {
             b.append(type);
             b.append("[");
-            b.append("removed: ");
-            b.append(gcRemovedBytesByType.get(type));
-            b.append(" events: ");
-            b.append(gcEventsByType.get(type));
-            b.append(" duration: ");
-            b.append(gcDurationUsByType.get(type));
+            GCMemoryAreaSnapshot s = memAreaSnapshots.get(type);
+            b.append(s.toString());
             b.append("] ");
         }
         return "["+ Text.renderTime(start)+"-"+Text.renderTime(end) +"] TotalDuration: " + gcDuration + "us " + numGcEvents + " events. Collected: " + Text.to2Dp(totalRemoved) + " "+b.toString();
     }
 
-    public void clear() {
+    public synchronized void clear() {
         numGcEvents = 0;
-        gcEventsByType.clear();
         totalRemoved = 0;
-        gcDurationUsByType.clear();
-        gcRemovedBytesByType.clear();
+        for (GCMemoryAreaSnapshot a:this.memAreaSnapshots.values()) {
+            a.reset();
+        }
         types = new String[]{};
         gcDuration = 0;
         start = 0;
@@ -178,4 +165,7 @@ public class GCSnapshot {
     }
 
 
+    public void setTypes(String[] types) {
+        this.types = types;
+    }
 }

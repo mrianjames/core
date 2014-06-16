@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
@@ -55,7 +56,14 @@ import com.sun.management.GarbageCollectionNotificationInfo;
  *
  */
 public class GCService extends AbstractComponent implements IGCService,Runnable {
-	
+	private long startTime = System.currentTimeMillis();
+    public long getUptime() {
+        return System.currentTimeMillis() - startTime;
+    }
+    public String getRemovedRateKPerSecond() {
+        double rt = (1000/getUptime()) * getTotalRemovedK();
+        return Text.to2Dp(rt);
+    }
 	private final static Logger logger = LoggerFactory.getLogger(GCService.class);
 	protected static final String YOUNG = "Young Gen GC";
 	protected static final String OLD =  "Old Gen GC";
@@ -73,6 +81,15 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
     private List<String> gctypes = new ArrayList<String>();
     private long lastGcTime = 0;
     private GarbageCollectionNotificationInfo lastGC;
+    private Future<?> apptmt;
+    public void setDuration(long duration) {
+        if (this.apptmt != null) {
+            this.apptmt.cancel(true);
+        }
+        this.duration = duration;
+        logger.info("Changing " + getName() + " reporting duration to " + duration + "ms.");
+        this.apptmt = scheduler.schedule(getName(),duration,duration,this);
+    }
     public String getLastGcTime() {
         return Text.renderTime(lastGcTime);
     }
@@ -111,13 +128,15 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
     }
 
 
-
+    /**
+     * Duration between bucketing.
+     */
     private long duration = 30000;
 	@Override
 	public void start() {
 		super.start();
 		this.registerForJmxUpdates();
-        scheduler.schedule(getName(),duration,duration,this);
+        this.apptmt = scheduler.schedule(getName(),duration,duration,this);
 		this.setState(ComponentState.AVAILABLE);
 	}
 
@@ -141,8 +160,10 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
             //MarkSweepCompact
             //ParNew
             //ConcurrentMarkSweep
-        	this.addGcType(gcbean.getName());
-
+            this.addGcType(gcbean.getName());
+        }
+        currentSnapshot = new GCSnapshot(getGCNames());
+        for (GarbageCollectorMXBean gcbean : gcbeans) {
             NotificationEmitter emitter = (NotificationEmitter) gcbean;
             //use an anonymously generated listener for this example
             // - proper code should really use a named class
@@ -176,7 +197,7 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
             //Add the listener
             emitter.addNotificationListener(listener, null, null);
         }
-        currentSnapshot = new GCSnapshot(getGCNames());
+
 	}
 	private void addGcType(String name) {
 		gctypes.add(name);
@@ -222,9 +243,20 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
         return snapshots.toArray(new GCSnapshot[snapshots.size()]);
     }
 
+    public long getBucketDuration() {
+        return this.duration;
+    }
     @Override
-    public GCSnapshot[] getAllSnapshots(String type) {
-        return snapshots.toArray(new GCSnapshot[snapshots.size()]);
+    public GCMemoryAreaSnapshot[] getAreaSnapshots(String type) {
+        //return snapshots.toArray(new GCSnapshot[snapshots.size()]);
+        List<GCMemoryAreaSnapshot> l = new ArrayList<GCMemoryAreaSnapshot>();
+        for (GCSnapshot gc: snapshots) {
+            GCMemoryAreaSnapshot a = gc.getAreaSnapshots().get(type);
+            if (a != null && a.getStart() > 0) {
+                l.add(a);
+            }
+        }
+        return l.toArray(new GCMemoryAreaSnapshot[l.size()]);
     }
 
 
@@ -247,6 +279,7 @@ public class GCService extends AbstractComponent implements IGCService,Runnable 
             snapshots.add(getSnapshotObject(currentSnapshot));
         }
         currentSnapshot.clear();
+        currentSnapshot.setTypes(this.getGCNames());
     }
 
     private GCSnapshot getSnapshotObject(GCSnapshot existing) {

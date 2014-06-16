@@ -4,8 +4,8 @@
  */
 .TableTools {
 	padding: 3px 0 3px 3px;
-	border: 1px solid #d0d0d0;
-	background-color: #f0f0f0;
+	border: 0px solid #d0d0d0;
+	/*background-color: #f0f0f0;*/
 	float: right;
 	margin-bottom: 1em;
 }
@@ -18,46 +18,46 @@
 
 .TableTools_csv {
 	background: url(../../../../images/csv.png) no-repeat center center;
-	border: 1px solid #f0f0f0;
+	/*border: 1px solid #f0f0f0;*/
 }
 
 .TableTools_csv_hover {
 	background: url(../../../../images/csv_hover.png) no-repeat center center;
-	border: 1px solid #d0d0d0;
-	background-color: #fdfdfd;
+	/*border: 1px solid #d0d0d0;
+	background-color: #fdfdfd;*/
 }
 
 .TableTools_xls {
 	background: url(../../../../images/xls.png) no-repeat center center;
-	border: 1px solid #f0f0f0;
+	/*border: 1px solid #f0f0f0;*/
 }
 
 .TableTools_xls_hover {
 	background: url(../../../../images/xls_hover.png) no-repeat center center;
-	border: 1px solid #d0d0d0;
-	background-color: #fdfdfd;
+	/*border: 1px solid #d0d0d0;
+	background-color: #fdfdfd;*/
 }
 
 .TableTools_clipboard {
 	background: url(../../../../images/copy.png) no-repeat center center;
-	border: 1px solid #f0f0f0;
+	/*border: 1px solid #f0f0f0;*/
 }
 
 .TableTools_clipboard_hover {
 	background: url(../../../../images/copy_hover.png) no-repeat center center;
-	border: 1px solid #d0d0d0;
-	background-color: #fdfdfd;
+	/*border: 1px solid #d0d0d0;
+	background-color: #fdfdfd;*/
 }
 
 .TableTools_print {
 	background: url(../../../../images/print.png) no-repeat center center;
-	border: 1px solid #f0f0f0;
+	/*border: 1px solid #f0f0f0;*/
 }
 
 .TableTools_print_hover {
 	background: url(../../../../images/print_hover.png) no-repeat center center;
-	border: 1px solid #d0d0d0;
-	background-color: #fdfdfd;
+	/*border: 1px solid #d0d0d0;
+	background-color: #fdfdfd;*/
 }
 
 .TableTools_PrintInfo {
@@ -69,7 +69,7 @@
 	margin-left: -200px;
 	margin-top: -75px;
 	text-align: center;
-	background-color: #3f3f3f;
+	/*background-color: #3f3f3f;*/
 	color: white;
 	padding: 10px 30px;
 	

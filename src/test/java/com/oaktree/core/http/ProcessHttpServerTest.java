@@ -44,7 +44,7 @@ public class ProcessHttpServerTest {
         while (true) {
         	logger.info("Making random garbage..."+i);
             i++;
-            LockSupport.parkNanos(10000000);
+            LockSupport.parkNanos(100000);
         }
 		
 	}
