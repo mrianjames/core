@@ -8,6 +8,7 @@ import com.oaktree.core.time.ITime;
 import com.oaktree.core.time.ITimeScheduler;
 import com.oaktree.core.time.JavaTime;
 
+import com.oaktree.core.utils.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,19 +91,19 @@ public class DispatcherMonitor extends AbstractComponent implements Runnable{
 	        builder.append(keyIncrease > 0 ? "+" : "");
 	        builder.append(keyIncrease);
 	        builder.append(" rt: ");
-	        builder.append(keyIncreaseRate);
+	        builder.append(Text.to2Dp(keyIncreaseRate));
 	        builder.append("p/s qd:");
 	        builder.append(totalQueuedCount);
 	        builder.append(totalQueuedIncrease > 0 ? " +" : "");
 	        builder.append(totalQueuedIncrease);
 	        builder.append(" rt: ");
-	        builder.append(queuedIncreaseRate);
+	        builder.append(Text.to2Dp(queuedIncreaseRate));
 	        builder.append("p/s exec:");
 	        builder.append(totalExecCount);
 	        builder.append(totalExecIncrease > 0 ? " +" : "");
 	        builder.append(totalExecIncrease);
 	        builder.append(" rt: ");
-	        builder.append(execIncreaseRate);
+	        builder.append(Text.to2Dp(execIncreaseRate));
 	        builder.append("p/s topQ: ");
 	        builder.append(topQueued);
 	        builder.append("[");
