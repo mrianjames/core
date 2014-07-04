@@ -98,6 +98,16 @@
 			</extension>
 		</extensions>
 		<plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <filters>
+                    </filters>
+                    <descriptors>
+                        <descriptor>demo.assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+            </plugin>
 		<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>

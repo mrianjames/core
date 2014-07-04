@@ -176,11 +176,11 @@ public class TestSubscriptionService {
         ss.subscribe(request);
 
         p.update(new MockDataObject(key,12.0));
-        LockSupport.parkNanos(100000);
+        LockSupport.parkNanos(500000);
         Assert.assertEquals(1,receiver.getData().size());
         receiver.clear();
         p.update(new MockDataObject(key,13.0));
-        LockSupport.parkNanos(100000);
+        LockSupport.parkNanos(500000);
         Assert.assertEquals(1,receiver.getData().size());
         MockDataObject o = receiver.getData().iterator().next();
         Assert.assertEquals(13.0,o.getValue(),0.0000000001);
