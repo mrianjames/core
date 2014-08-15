@@ -141,7 +141,7 @@ public class TestDispatcher {
 	List<TestTask> tasks;
 	List<TestTask> longTasks;
 	List<Long> results;
-	int TASKS = 100000;
+	int TASKS = 10000;
 	private IDispatcher dispatcher;
 	private int tpriority = Thread.NORM_PRIORITY;
 	//private int tpriority = Thread.MAX_PRIORITY;

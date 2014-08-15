@@ -6,20 +6,32 @@
         <format>zip</format>
         <format>tar.gz</format>
     </formats>
-    <dependencySets>
-        <dependencySet>
-            <unpack>false</unpack>
-            <!--<scope>runtime</scope>-->
-            <outputDirectory>lib</outputDirectory>
-        </dependencySet>
 
-    </dependencySets>
-    <files>
+                <dependencySets>
+                    <dependencySet>
+                        <unpack>false</unpack>
+                        <!--<scope>runtime</scope>-->
+                        <outputDirectory>lib</outputDirectory>
+
+                    </dependencySet>
+                    <dependencySet>
+                        <unpack>false</unpack>
+                        <scope>test</scope>
+                        <outputDirectory>lib</outputDirectory>
+                        <useProjectArtifact>true</useProjectArtifact>
+                        <useProjectAttachments>true</useProjectAttachments>
+                    </dependencySet>
+
+
+                </dependencySets>
+
+
+    <!--<files>
         <file>
             <source>${project.basedir}/target/com.oaktree.core-2.0.6-SNAPSHOT-tests.jar</source>
             <outputDirectory>/lib</outputDirectory>
         </file>
-    </files>
+    </files>-->
     <fileSets>
 
         <fileSet>

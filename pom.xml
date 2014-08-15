@@ -107,6 +107,15 @@
                         <descriptor>demo.assembly.xml</descriptor>
                     </descriptors>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 		<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -207,7 +216,9 @@
 					<excludes>
 						<exclude>**/TestMulticast.java</exclude>
 					</excludes>
+                    <argLine>-Xms1024m -Xmx2048m</argLine>
 				</configuration>
+
 			</plugin>
 
 		</plugins>
@@ -281,8 +292,8 @@
 		<dependency>
 		  <groupId>oaktree</groupId>
 		  <artifactId>slf4j-oaktree</artifactId>
-		  <version>1.0.14</version>
-		  <scope>test</scope>
+		  <version>1.0.18</version>
+		  <scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

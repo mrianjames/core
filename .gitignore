@@ -20,3 +20,4 @@ allocation.jar
 .project
 *.iml
 .settings
+Dockerfile

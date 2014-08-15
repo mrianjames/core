@@ -5,6 +5,8 @@ import com.oaktree.core.container.IComponent;
 import com.oaktree.core.data.IData;
 import com.oaktree.core.data.IDataProvider;
 import com.oaktree.core.data.IDataReceiver;
+import com.oaktree.core.threading.dispatcher.IDispatcher;
+import com.oaktree.core.threading.dispatcher.SingleDispatcher.NullDispatcher;
 import com.oaktree.core.threading.dispatcher.throughput.ThroughputDispatcher;
 
 import org.junit.After;
@@ -26,7 +28,7 @@ import junit.framework.Assert;
 public class TestSubscriptionService {
 
     private MockDataProvider p;
-    private ThroughputDispatcher dispatcher;
+    private IDispatcher dispatcher;
     private SubscriptionService<MockDataObject> ss;
     private MockReceiver receiver;
 
@@ -109,7 +111,8 @@ public class TestSubscriptionService {
     @Before
     public void setup(){
         this.p = new MockDataProvider();
-        this.dispatcher = new ThroughputDispatcher("D",2);
+        //this.dispatcher = new ThroughputDispatcher("D",2);
+        this.dispatcher = new NullDispatcher();
         dispatcher.start();
 
         this.ss = new SubscriptionService<MockDataObject>("ss");
@@ -144,6 +147,9 @@ public class TestSubscriptionService {
 
     @Test
     public void testConflation() {
+        IDispatcher properDispatcher = new ThroughputDispatcher("TputDi2",2);
+        properDispatcher.start();
+        ss.setDispatcher(properDispatcher);
         ss.setConflation(true);
         SubscriptionRequest<MockDataObject> request = new SubscriptionRequest<MockDataObject>(key,receiver,SubscriptionType.ASYNC_SNAP_AND_SUBSCRIBE);
         ss.subscribe(request);
@@ -176,11 +182,11 @@ public class TestSubscriptionService {
         ss.subscribe(request);
 
         p.update(new MockDataObject(key,12.0));
-        LockSupport.parkNanos(500000);
+        //LockSupport.parkNanos(500000);
         Assert.assertEquals(1,receiver.getData().size());
         receiver.clear();
         p.update(new MockDataObject(key,13.0));
-        LockSupport.parkNanos(500000);
+        //LockSupport.parkNanos(500000);
         Assert.assertEquals(1,receiver.getData().size());
         MockDataObject o = receiver.getData().iterator().next();
         Assert.assertEquals(13.0,o.getValue(),0.0000000001);

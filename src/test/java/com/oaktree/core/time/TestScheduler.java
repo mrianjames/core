@@ -66,11 +66,16 @@ public class TestScheduler {
                 long t = System.currentTimeMillis();
                 System.out.println("Executed: " + Text.renderTime(t));
                 run.add(t);
-                //latch.countDown();
+                latch.countDown();
             }
         };
         scheduler.scheduleUntilReps("A",1000,100,3,task);
-        try {Thread.sleep(3000);} catch (Exception e) {}
+        //try {Thread.sleep(3000);} catch (Exception e) {}
+        try {
+            latch.await(5000,TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Assert.assertEquals(3,run.size());
     }
 
