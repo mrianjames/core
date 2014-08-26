@@ -42,7 +42,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>oaktree</groupId>
 	<artifactId>com.oaktree.core</artifactId>
-	<version>2.0.8-SNAPSHOT</version>
+	<version>2.0.8</version>
 	<name>Core</name>
 	<url>${oaktree.home}</url>
 	<developers>
@@ -74,6 +74,7 @@
         <developerConnection>scm:svn:${oaktree.home}:8081/svn/oaktree_core/trunk</developerConnection> -->
         <connection>scm:git:git://pi1:/home/git/repositories/oaktree_core</connection>
         <developerConnection>scm:git:git://pi1:/home/git/repositories/oaktree_core</developerConnection>
+    <tag>com.oaktree.core-2.0.8</tag>
   </scm>
     <distributionManagement>
         <repository>
