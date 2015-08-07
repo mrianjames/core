@@ -59,6 +59,7 @@ public class TestTimestampedFile {
             }
             bw.flush();
             bw.close();
+            file.refresh();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -112,9 +113,9 @@ public class TestTimestampedFile {
     public void testGetPreviousLineFromSeekPos() {
         try {
             //check what you want from this function.
-            long bytesPerLine = file.length()/lines;
-            file.seek(bytesPerLine+5);
-            String line = TextFileUtils.getPreviousLineFromSeekPos(file);
+            long bytesPerLine = file.getFile().length()/lines;
+            file.getFile().seek(bytesPerLine+5);
+            String line = file.getPreviousLineFromSeekPos();
             Assert.assertNotNull(line);
             Assert.assertEquals(line, timestampBase + 0 + " LINE0");
         } catch (IOException e) {
@@ -134,69 +135,54 @@ public class TestTimestampedFile {
 
     @Test
     public void testGetLinesWithinAllLines() {
-        try {
-            Collection<String> lines = TextFileUtils.getAllLinesWithin(this.file,timestampBase+"0",timestampBase+this.lines);
+            Collection<String> lines = file.getAllLinesWithin(timestampBase+"0",timestampBase+this.lines);
             Assert.assertEquals(lines.size(), this.lines, EPSILON);
             for (String line:lines) {
                 System.out.println(line);
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
     public void testGetLinesWithinCutOutEndOnes() {
-        try {
 
             setupExtendedFile();
-
+            file.refresh();
             //get 13:10:06 ->13:10:06 i.e the first minute
-            Collection<String> lines = TextFileUtils.getAllLinesWithin(this.file, (timestampBase + "0").substring(0,8), (timestampBase + this.lines).substring(0,8));
+            Collection<String> lines = file.getAllLinesWithin((timestampBase + "0").substring(0,8), (timestampBase + this.lines).substring(0,8));
             Assert.assertEquals(lines.size(), this.lines, EPSILON);
             for (String line : lines) {
                 System.out.println(line);
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
     public void testGetLinesWithinMiddle() {
-        try {
+
             setupExtendedFile();
             //get 13:10:07 ->13:10:07 i.e the first minute
             String min = (timestampBaseMore + "0").substring(0,8);
-            Collection<String> lines = TextFileUtils.getAllLinesWithin(this.file, min, min);
+            Collection<String> lines = file.getAllLinesWithin(min, min);
             Assert.assertEquals(lines.size(), this.lines, EPSILON);
             for (String line : lines) {
                 Assert.assertEquals(min,line.substring(0,8));
                 System.out.println(line);
             }
             System.out.println("Bravo...");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
     @Test
     public void testGetLastMinute() {
-        try {
             setupExtendedFile();
             //get 13:10:08 ->13:10:08 i.e the last minute
             String min = (timestampBaseExtra + "0").substring(0,8);
-            Collection<String> lines = TextFileUtils.getAllLinesWithin(this.file, min, min);
+            Collection<String> lines = file.getAllLinesWithin(min, min);
             Assert.assertEquals(lines.size(), this.lines, EPSILON);
             for (String line : lines) {
                 Assert.assertEquals(min,line.substring(0,8));
                 System.out.println(line);
             }
             System.out.println("Bravo...");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 }
