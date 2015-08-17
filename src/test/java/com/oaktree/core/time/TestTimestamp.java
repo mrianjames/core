@@ -26,7 +26,7 @@ public class TestTimestamp {
         Timestamp t = new Timestamp(ms, Precision.Milliseconds);
         Timestamp us = t.convertToPrecision(Precision.Microseconds);
         Assert.assertEquals(ms*1000,us.getTimestamp());
-        Assert.assertNotSame(System.identityHashCode(t),System.identityHashCode(us));
+        Assert.assertNotSame(System.identityHashCode(t), System.identityHashCode(us));
     }
 
 
@@ -55,6 +55,19 @@ public class TestTimestamp {
     }
 
     @Test
+    public void testFuzzyEqual() {
+        long ms = System.currentTimeMillis();
+        Timestamp t =  new Timestamp(ms,Precision.Milliseconds);
+        Timestamp u =  new Timestamp(ms,Precision.Milliseconds);
+        Assert.assertTrue(t.equals(u));
+        Assert.assertTrue(t.equals(u,Precision.Milliseconds));
+        Assert.assertEquals(0,t.compareTo(u),EPSION);
+        Timestamp v = new Timestamp(ms+1, Precision.Milliseconds);
+        Assert.assertTrue(t.equals(v,Precision.Seconds));
+        Assert.assertFalse(t.equals(v,Precision.Microseconds));
+    }
+
+    @Test
     public void testIsBefore() {
         long ms = System.currentTimeMillis();
         Timestamp t =  new Timestamp(ms,Precision.Milliseconds);
@@ -66,6 +79,7 @@ public class TestTimestamp {
             Assert.fail();
         } catch (Exception e) {}
 
+        Assert.assertTrue(u.isBefore(t, Precision.Nanos));
     }
 
     @Test
@@ -83,5 +97,6 @@ public class TestTimestamp {
             Assert.fail();
         } catch (Exception e) {}
 
+        Assert.assertTrue(u.isAfter(t, Precision.Nanos));
     }
 }

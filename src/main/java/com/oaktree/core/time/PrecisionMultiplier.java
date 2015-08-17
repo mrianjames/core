@@ -19,6 +19,7 @@ public class PrecisionMultiplier {
     /**
      * Well known or requested multipliers. For minutes...
      */
+    public static PrecisionMultiplier minuteToHourMultiplier = new PrecisionMultiplier(60l,false);
     public static PrecisionMultiplier minuteToMinutesMultiplier = NO_MULTIPLY;
     public static PrecisionMultiplier minuteToSecondMultiplier = new PrecisionMultiplier(60l,true);
     public static PrecisionMultiplier minuteToMillisecondMultiplier = new PrecisionMultiplier(60000l,true);
@@ -29,6 +30,7 @@ public class PrecisionMultiplier {
      * Well known or requested multipliers. For seconds...
      * so for 1 second what do we need to multiply/divide by to see it in microseconds.
      */
+    public static PrecisionMultiplier secondToHoursMultiplier = new PrecisionMultiplier(60 * 60l ,false);
     public static PrecisionMultiplier secondToMinutesMultiplier = new PrecisionMultiplier(60l,false);
     public static PrecisionMultiplier secondToSecondMultiplier = NO_MULTIPLY;
     public static PrecisionMultiplier secondToMillisecondMultiplier = new PrecisionMultiplier(1000l,true);
@@ -39,6 +41,7 @@ public class PrecisionMultiplier {
      * Well known or requested multipliers. For seconds...
      * so for 1 ms what do we need to multiply/divide by to see it in microseconds.
      */
+    public static PrecisionMultiplier millisecondsToHourMultiplier = new PrecisionMultiplier(60 * 60000l,false);
     public static PrecisionMultiplier millisecondsToMinutesMultiplier = new PrecisionMultiplier(60000l,false);
     public static PrecisionMultiplier millisecondsToSecondMultiplier = new PrecisionMultiplier(1000l,false);
     public static PrecisionMultiplier millisecondsToMillisecondMultiplier = NO_MULTIPLY;
@@ -48,6 +51,7 @@ public class PrecisionMultiplier {
     /**
      * Well known or requested multipliers. For micros...
      */
+    public static PrecisionMultiplier microToHourMultiplier = new PrecisionMultiplier(60 * 60000000l,false);
     public static PrecisionMultiplier microToMinutesMultiplier = new PrecisionMultiplier(60000000l,false);
     public static PrecisionMultiplier microToSecondMultiplier = new PrecisionMultiplier(1000000,false);
     public static PrecisionMultiplier microToMillisecondMultiplier = new PrecisionMultiplier(1000,false);
@@ -57,7 +61,8 @@ public class PrecisionMultiplier {
     /**
      * Well known or requested multipliers. For nanoseconds...
      */
-    public static PrecisionMultiplier nanoToMinutesMultiplier = new PrecisionMultiplier(60,false);
+    public static PrecisionMultiplier nanoToHourMultiplier = new PrecisionMultiplier(60 * 60 * 1000000000,false);
+    public static PrecisionMultiplier nanoToMinutesMultiplier = new PrecisionMultiplier(60 * 1000000000,false);
     public static PrecisionMultiplier nanoToSecondMultiplier = new PrecisionMultiplier(1000000000,false);
     public static PrecisionMultiplier nanoToMillisecondMultiplier = new PrecisionMultiplier(1000000,false);
     public static PrecisionMultiplier nanoToMicrosMultiplier = new PrecisionMultiplier(1000,false);
@@ -131,5 +136,14 @@ public class PrecisionMultiplier {
         } else {
             return l / multiplier;
         }
+    }
+
+    /**
+     * Adjust a timestamp as long using this precision modifier.
+     * @param timestamp
+     * @return
+     */
+    public long getAdjustedTimestamp(long timestamp) {
+        return shouldMultiply() ? timestamp * getMultiplier() : timestamp / getMultiplier();
     }
 }

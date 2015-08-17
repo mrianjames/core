@@ -6,6 +6,7 @@ package com.oaktree.core.time;
  */
 public enum Precision {
 
+    Hours(PrecisionMultiplier.secondToHoursMultiplier),
     Minutes(PrecisionMultiplier.secondToMinutesMultiplier),
     Seconds(PrecisionMultiplier.secondToSecondMultiplier),
     Milliseconds(PrecisionMultiplier.secondToMillisecondMultiplier),

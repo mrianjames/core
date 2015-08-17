@@ -56,4 +56,33 @@ public class TestPrecision {
         Assert.assertEquals(l,adjusted,EPSILON);
     }
 
+    @Test
+    public void testPrecisionModifierConvert() {
+        long time = System.currentTimeMillis();
+        Timestamp a = new Timestamp(time,Precision.Milliseconds);
+        Timestamp b = new Timestamp(time+1,Precision.Milliseconds);
+        PrecisionMultiplier modifiera = TimestampUtils.getMultiplier(a.getPrecision(), Precision.Seconds);
+        PrecisionMultiplier modifierb = TimestampUtils.getMultiplier(b.getPrecision(), Precision.Seconds);
+
+        Assert.assertEquals(modifiera.getAdjustedTimestamp(a.getTimestamp()),modifierb.getAdjustedTimestamp(b.getTimestamp()),EPSILON);
+    }
+
+    @Test
+    public void testPrecisionGranularity() {
+        long time = System.currentTimeMillis();
+
+        Timestamp a = new Timestamp(time,Precision.Milliseconds);
+        Timestamp b = new Timestamp(time+1,Precision.Milliseconds);
+
+        Assert.assertEquals(Precision.Milliseconds, TimestampUtils.getLeastGranularPrecision(a, b));
+        Assert.assertEquals(Precision.Milliseconds, TimestampUtils.getMostGranularPrecision(a, b));
+
+        a = new Timestamp(time,Precision.Nanos);
+        b = new Timestamp(time+1,Precision.Milliseconds);
+
+        Assert.assertEquals(Precision.Milliseconds, TimestampUtils.getLeastGranularPrecision(a, b));
+        Assert.assertEquals(Precision.Nanos, TimestampUtils.getMostGranularPrecision(a, b));
+
+    }
+
 }

@@ -2,6 +2,7 @@ package com.oaktree.core.file;
 
 import com.oaktree.core.time.Precision;
 import com.oaktree.core.time.Timestamp;
+import com.oaktree.core.time.TimestampFormat;
 import com.oaktree.core.time.TimestampUtils;
 
 import java.io.FileNotFoundException;
@@ -12,6 +13,12 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * A timestamped file is a wrapper around a random access file where lines
+ * timestamped lines can be parsed and searched.
+ * Consider an application which produces a large file, full of useful logging. The file is in order and lines have a known
+ * format of timestamp. It should be perfectly possible to have a tool that can efficiently parse such a file such that
+ * you can pick out lines for further inspection within supplied timestamps.
+ *
  * Created by ij on 06/08/15.
  */
 public class TimestampedFile {
@@ -20,15 +27,15 @@ public class TimestampedFile {
     private RandomAccessFile file = null;
     private String firstLine;
     private String lastLine;
-    private Format format;
+    private TimestampFormat timestampFormat;
     private Timestamp lLastTimestamp;
     private String strFirstTimestamp;
     private String strLastTimestamp;
     private Timestamp lFirstTimestamp;
 
     /**
-     * Create a timestamp stamped file. The positioning of the timestamp and format is defined by:
-     * "****************** HH:MM:SS.sssuuunnn".
+     * Create a timestamp stamped file. The positioning of the timestamp and timestampFormat is defined by:
+     * "****************** hh:mm:ss.iiiuuunnn".
      * @param fileName
      * @param format
      */
@@ -43,6 +50,10 @@ public class TimestampedFile {
         }
     }
 
+    public TimestampFormat getTimestampFormat() {
+        return this.timestampFormat;
+    }
+
     public void close() {
         try {
             this.file.close();
@@ -55,77 +66,10 @@ public class TimestampedFile {
         return file;
     }
 
-    /**
-     * Structure of our timestamps used in this file.
-     * We are only interested in times, but we need to
-     * know where the various bits start and what the precision
-     * of timestamps will be e.g. min/sec/ms, min/sec/ms/us
-     *
-     * Example YYYY-MM-DD hh:mm:ss.iiiuuunnn
-     */
-    private class Format {
-
-        int hourStart = -1;
-        int hourEnd = -1;
-
-        int minStart = -1;
-        int minEnd = -1;
-
-        int secondStart = -1;
-        int secondEnd = -1;
-
-        int milliStart = -1;
-        int milliEnd = -1;
-
-        int microStart = -1;
-        int microEnd = -1;
-
-        int nanoStart = -1;
-        int nanoEnd = -1;
-
-        int timeLength = -1;
-        private int timeEnd = -1;
-
-        public boolean hasSecond() {return secondStart > -1;}
-        public boolean hasMillis() {return milliStart > -1;}
-        public boolean hasMicros() {return microStart > -1;}
-        public boolean hasNanos() {return nanoStart > -1;}
-        public int getTimeLength() {return getTimeLength();}
-        public int getTimeStart() { return hourStart;}
-        public int getTimeEnd() { return timeEnd; }
-        public int getPrefix() { return hourStart; }
-        private char HOURS = 'H';
-        private char MINS = 'M';
-        private char SECONDS = 'S';
-        private char MILLIS = 'i';
-        private char MICROS ='u';
-        private char NANOS='n';
-        public void parse(String format) {
-            int lastTime = -1;
-            hourStart = format.indexOf(HOURS);
-            hourEnd = format.lastIndexOf(HOURS);
-            if (hourEnd > -1) { lastTime = hourEnd; }
-            minStart = format.indexOf(MINS);
-            minEnd = format.lastIndexOf(MINS);
-            if (minEnd > -1) { lastTime = hourEnd; }
-            secondStart = format.indexOf(SECONDS);
-            secondEnd = format.lastIndexOf(SECONDS);
-            if (secondEnd > -1) { lastTime = hourEnd; }
-            milliStart = format.indexOf(MILLIS);
-            milliEnd = format.lastIndexOf(MILLIS);
-            if (milliEnd > -1) { lastTime = hourEnd; }
-            microStart = format.indexOf(MICROS);
-            microEnd = format.lastIndexOf(MICROS);
-            if (microEnd > -1) { lastTime = hourEnd; }
-            nanoStart = format.indexOf(NANOS);
-            nanoEnd = format.lastIndexOf(NANOS);
-            if (nanoEnd > -1) { lastTime = hourEnd; }
-            this.timeEnd = lastTime;
-        }
-    };
+    ;
 
     private void parseFormat(String format) {
-        this.format = new Format();
+        this.timestampFormat = new TimestampFormat(format);
     }
 
     /**
@@ -134,10 +78,12 @@ public class TimestampedFile {
     public void refresh() {
         this.firstLine = getFirstLine();
         this.lastLine = getLastLine();
-        strFirstTimestamp = firstLine.substring(0, 8);
-        strLastTimestamp = lastLine.substring(0, 8);
-        lFirstTimestamp = TimestampUtils.strSecondTimeToTimestamp(strFirstTimestamp, Precision.Nanos);
-        lLastTimestamp = TimestampUtils.strSecondTimeToTimestamp(strLastTimestamp, Precision.Nanos);
+        lFirstTimestamp = timestampFormat.asTimestamp(firstLine);
+        lLastTimestamp = timestampFormat.asTimestamp(lastLine);
+//        strFirstTimestamp = firstLine.substring(0, 8);
+//        strLastTimestamp = lastLine.substring(0, 8);
+//        lFirstTimestamp = TimestampUtils.strSecondTimeToTimestamp(strFirstTimestamp, Precision.Nanos);
+//        lLastTimestamp = TimestampUtils.strSecondTimeToTimestamp(strLastTimestamp, Precision.Nanos);
     }
 
     /**
@@ -272,10 +218,13 @@ public class TimestampedFile {
                 file.seek(posToCheck);
             }
             String line = getPreviousLineFromSeekPos();
-            Timestamp previousLineTimestamp = TimestampUtils.strSecondTimeToTimestamp(line.substring(0, 8), Precision.Nanos);
+            //Timestamp previousLineTimestamp = TimestampUtils.strSecondTimeToTimestamp(line.substring(0, 8), Precision.Nanos);
+            Timestamp previousLineTimestamp = getTimestampFromString(line);
+            Precision leastPrecision = TimestampUtils.getLeastGranularPrecision(searchTimestamp, previousLineTimestamp);
+
             long seekPos = 0;
             long step = 0;
-            if (searchTimestamp.equals(previousLineTimestamp)) {
+            if (searchTimestamp.equals(previousLineTimestamp,leastPrecision)) {
                 //great news. we found our search timestamp. but still need to go backwards to find the first instance of this...
                 upperCheckedPos = posToCheck;
                 step = (long) ((upperCheckedPos - lowerCheckedPos) / 2.0);
@@ -288,13 +237,13 @@ public class TimestampedFile {
                     //we need to go back further in time...
                     seekPos = seekForFirstInstanceOfTimestamp( lowerCheckedPos, upperCheckedPos, posToCheck, searchTimestamp);
                 }
-            } else if (searchTimestamp.isBefore(previousLineTimestamp)) {
+            } else if (searchTimestamp.isBefore(previousLineTimestamp,leastPrecision)) {
                 upperCheckedPos = posToCheck;
                 step = (long) ((upperCheckedPos - lowerCheckedPos) / 2.0); //TODO think rounding issue here...
                 posToCheck = posToCheck - step;
                 //need to go back further in time
                 seekPos = seekForFirstInstanceOfTimestamp(lowerCheckedPos, upperCheckedPos, posToCheck, searchTimestamp);
-            } else if (searchTimestamp.isAfter(previousLineTimestamp)) {
+            } else if (searchTimestamp.isAfter(previousLineTimestamp,leastPrecision)) {
                 lowerCheckedPos = posToCheck;
                 step = (long) (upperCheckedPos - lowerCheckedPos);
                 posToCheck = posToCheck + step;
@@ -310,37 +259,42 @@ public class TimestampedFile {
 
     /**
      * Move through a file looking for where a timestamp is in file.
-     * @param timestamp
+     * @param lMyTimestamp
      * @param isStart
      * @return
      */
-    public  long seek(String timestamp,boolean isStart) {
+    public long seek(Timestamp lMyTimestamp,boolean isStart) {
         try {
+            Precision leastPrecision = TimestampUtils.getLeastGranularPrecision(lMyTimestamp,lFirstTimestamp);
             //TODO best to do timestamp stuff in dedicated function/formatter...
-            Timestamp lMyTimestamp = TimestampUtils.strSecondTimeToTimestamp(timestamp.substring(0, 8), Precision.Nanos);
-            if (isStart && lMyTimestamp.equals(lFirstTimestamp)) {
+            //Timestamp lMyTimestamp = TimestampUtils.strSecondTimeToTimestamp(timestamp.substring(0, 8), Precision.Nanos);
+            if (isStart && lMyTimestamp.equals(lFirstTimestamp, leastPrecision)) { //TODO do we need equals(stamp,comparingPrecision).
                 return 0;
             }
-            if (!isStart && lMyTimestamp.equals(lLastTimestamp)) {
+            if (!isStart && lMyTimestamp.equals(lLastTimestamp, leastPrecision)) {
                 return file.length();
             }
-            long lDuration = (lLastTimestamp.getTimestamp() - lFirstTimestamp.getTimestamp()) / 1000000000;
-            long secondsFromStart = (lMyTimestamp.getTimestamp() - lFirstTimestamp.getTimestamp()) / 1000000000;
+            //TODO doesnt really matter what these are in..but obviously all have to use same precision base for comparison...
+            long lDuration = lLastTimestamp.getDifference(lFirstTimestamp, leastPrecision);
+                   // (lLastTimestamp.getTimestamp() - lFirstTimestamp.getTimestamp()) / 1000000000;
+            //long secondsFromStart = (lMyTimestamp.getTimestamp() - lFirstTimestamp.getTimestamp()) / 1000000000;
+            long secondsFromStart = -(lFirstTimestamp.getDifferenceAndConvertIfRequired(lMyTimestamp));
             double pct = (1.0 / lDuration) * secondsFromStart;
             file.seek(file.length());
             if (isStart) {
-                if (lMyTimestamp.isAfter(lLastTimestamp)) {
+                if (lMyTimestamp.isAfter(lLastTimestamp,leastPrecision)) {
                     return -1;
                 }
-                if (lMyTimestamp.isBefore(lFirstTimestamp)) {
+                if (lMyTimestamp.isBefore(lFirstTimestamp,leastPrecision)) {
                     return 0;
                 }
                 return seekForFirstInstanceOfTimestamp(0, file.getFilePointer(), (long) (pct * file.getFilePointer()), lMyTimestamp);
             } else {
-                if (lMyTimestamp.isBefore(lFirstTimestamp)) {
+                //TODO isBefore to a precision, like equals.
+                if (lMyTimestamp.isBefore(lFirstTimestamp,leastPrecision)) {
                     return -1;
                 }
-                if (lMyTimestamp.isAfter(lLastTimestamp)) {
+                if (lMyTimestamp.isAfter(lLastTimestamp,leastPrecision)) {
                     return file.getFilePointer();
                 }
                 return seekForLastInstanceOfTimestamp(0, file.getFilePointer(), (long) (pct * file.getFilePointer()), lMyTimestamp);
@@ -362,10 +316,13 @@ public class TimestampedFile {
         try {
             file.seek(posToCheck);
             String line = getNextLineFollowingSeekPos();
-            Timestamp nextLineTimestamp = TimestampUtils.strSecondTimeToTimestamp(line.substring(0, 8), Precision.Nanos);
+            //Timestamp nextLineTimestamp = TimestampUtils.strSecondTimeToTimestamp(line.substring(0, 8), Precision.Nanos);
+            Timestamp nextLineTimestamp = getTimestampFromString(line);
+            Precision leastPrecision = TimestampUtils.getLeastGranularPrecision(searchTimestamp, nextLineTimestamp);
+
             long seekPos = 0;
             long step = 0;
-            if (searchTimestamp.equals(nextLineTimestamp)) {
+            if (searchTimestamp.equals(nextLineTimestamp,leastPrecision)) {
                 lowerCheckedPos = posToCheck;
                 step = (long) ((upperCheckedPos - lowerCheckedPos) / 2.0);
                 if (step == 0) {
@@ -377,13 +334,13 @@ public class TimestampedFile {
                     seekPos = seekForLastInstanceOfTimestamp(lowerCheckedPos, upperCheckedPos, posToCheck, searchTimestamp);
                 }
 
-            } else if (searchTimestamp.isAfter(nextLineTimestamp)) {
+            } else if (searchTimestamp.isAfter(nextLineTimestamp,leastPrecision)) {
                 lowerCheckedPos = posToCheck;
                 step = (long) ((upperCheckedPos - lowerCheckedPos) / 2.0);
                 posToCheck = posToCheck + step;
                 //go forward in time.
                 seekPos = seekForLastInstanceOfTimestamp(lowerCheckedPos, upperCheckedPos, posToCheck, searchTimestamp);
-            } else if (searchTimestamp.isBefore(nextLineTimestamp)) {
+            } else if (searchTimestamp.isBefore(nextLineTimestamp,leastPrecision)) {
                 upperCheckedPos = posToCheck;
                 step = (long) ((upperCheckedPos - lowerCheckedPos) / 2.0);
                 posToCheck = posToCheck - step;
@@ -403,7 +360,7 @@ public class TimestampedFile {
      * @param timestamp
      * @return
      */
-    public long getSeekPositionForStartTimestamp(String timestamp) {
+    public long getSeekPositionForStartTimestamp(Timestamp timestamp) {
         return seek( timestamp, true);
     }
 
@@ -413,24 +370,36 @@ public class TimestampedFile {
      * @return
      * @throws IOException
      */
-    public long getSeekPositionForEndTimestamp( String timestamp) {
+    public long getSeekPositionForEndTimestamp(Timestamp timestamp) {
         return seek(timestamp, false);
     }
 
     /**
-     * Get all lines within a time range in a simple format.
+     * Get all lines within a time range in a simple timestampFormat. We convert these times into a Timestamp object
+     * which accurately represents the time and precision.
      */
     public Collection<String> getAllLinesWithin( String startTime, String endTime)  {
         try {
+            Timestamp startTs = getTimestampFromPartialString(startTime);
+            Timestamp endTs = getTimestampFromPartialString(endTime);
             List<String> lines = new ArrayList<String>();
-            long startPos = getSeekPositionForStartTimestamp(startTime);
-            long endPos = getSeekPositionForEndTimestamp(endTime);
+
+            long startPos = getSeekPositionForStartTimestamp(startTs);
+            long endPos = getSeekPositionForEndTimestamp(endTs);
             if (endPos == -1) {
                 endPos = file.length();
             }
             file.seek(startPos);
             do {
-                lines.add(file.readLine());
+                String line = file.readLine();
+                if (lineFilter != null) {
+                    Object[] data = timestampFormat.split(line);
+                    if (lineFilter.filter((Timestamp)data[0],(String)(data[1]))) {
+                        lines.add(line);
+                    }
+                } else {
+                    lines.add(line);
+                }
             } while (file.getFilePointer() < endPos);
             return lines;
         } catch (IOException e) {
@@ -438,5 +407,22 @@ public class TimestampedFile {
         }
     }
 
+    private ITimestampLineFilter lineFilter;
+    public void setLineFilter(ITimestampLineFilter filter) {
+        this.lineFilter = filter;
+    }
 
+    /**
+     * Convert a string timestamp into a proper timestamp object we can use to
+     * parse the file.
+     * @param strTime
+     * @return
+     */
+    public Timestamp getTimestampFromPartialString(String strTime) {
+        return timestampFormat.asTimestampFromPartial(strTime);
+    }
+
+    public Timestamp getTimestampFromString(String strTime) {
+        return timestampFormat.asTimestamp(strTime);
+    }
 }

@@ -53,6 +53,24 @@ public class Timestamp implements Comparable {
         return false;
     }
 
+    /**
+     * Compare a timestamp to this, but when both are set to precision p.
+     * If p = our precision, then this is equivalent to equals(object).
+     * @param t
+     * @param p
+     * @return
+     */
+    public boolean equals(Timestamp t, Precision p) {
+        if (p.equals(this.getPrecision()) && t.getPrecision().equals(p)) {
+            return this.equals(t);
+        }
+        PrecisionMultiplier pm = TimestampUtils.getMultiplier(this.getPrecision(),p);
+        long ourTimestamp = pm.getAdjustedTimestamp(getTimestamp());
+        pm = TimestampUtils.getMultiplier(t.getPrecision(),p);
+        long theirTimestamp = pm.getAdjustedTimestamp(t.getTimestamp());
+        return ourTimestamp == theirTimestamp;
+    }
+
     @Override
     public int hashCode() {
         return (int)(timestamp + precision.hashCode());
@@ -91,6 +109,7 @@ public class Timestamp implements Comparable {
 
     /**
      * Check if timestamp is equal to the target - will explode if different precisions.
+     * TODO same now as equals....retire?
      * @param t
      * @return
      */
@@ -114,6 +133,40 @@ public class Timestamp implements Comparable {
     }
 
     /**
+     * Check if this timestamp is after timestamp t, when both are in precision p.
+     * @param t
+     * @param p
+     * @return
+     */
+    public boolean isAfter(Timestamp t, Precision p) {
+        if (p.equals(this.getPrecision()) && t.getPrecision().equals(p)) {
+            return this.isAfter(t);
+        }
+        PrecisionMultiplier pm = TimestampUtils.getMultiplier(this.getPrecision(),p);
+        long ourTimestamp = pm.getAdjustedTimestamp(getTimestamp());
+        pm = TimestampUtils.getMultiplier(t.getPrecision(),p);
+        long theirTimestamp = pm.getAdjustedTimestamp(t.getTimestamp());
+        return ourTimestamp > theirTimestamp;
+    }
+
+    /**
+     * Check if this timestamp is after timestamp t, when both are in precision p.
+     * @param t
+     * @param p
+     * @return
+     */
+    public boolean isBefore(Timestamp t, Precision p) {
+        if (p.equals(this.getPrecision()) && t.getPrecision().equals(p)) {
+            return this.isBefore(t);
+        }
+        PrecisionMultiplier pm = TimestampUtils.getMultiplier(this.getPrecision(),p);
+        long ourTimestamp = pm.getAdjustedTimestamp(getTimestamp());
+        pm = TimestampUtils.getMultiplier(t.getPrecision(),p);
+        long theirTimestamp = pm.getAdjustedTimestamp(t.getTimestamp());
+        return ourTimestamp < theirTimestamp;
+    }
+
+    /**
      * Get difference between two timestamps.
      * Will throw Exception if the precisions are not equivalent.
      * @param t - timestamp to compare to.
@@ -124,6 +177,19 @@ public class Timestamp implements Comparable {
             throw new IllegalArgumentException("Timestamps have different precisions which is not supported in this method.");
         }
         return timestamp-t.getTimestamp();
+    }
+
+    /**
+     * Get the difference in a specified precision.
+     *
+     * @param t
+     * @param p
+     * @return
+     */
+    public long getDifference(Timestamp t,Precision p) {
+        PrecisionMultiplier ourM = TimestampUtils.getMultiplier(precision,p);
+        PrecisionMultiplier theirM = TimestampUtils.getMultiplier(t.getPrecision(),p);
+        return ourM.getAdjustedTimestamp(getTimestamp()) - theirM.getAdjustedTimestamp(t.getTimestamp());
     }
 
     /**
@@ -160,6 +226,12 @@ public class Timestamp implements Comparable {
         return new Timestamp(v+getTimestamp(),precision);
     }
 
+    /**
+     * Take one timestamp off this timestamp and return a new timestamp, all in our precision.
+     *
+     * @param ts
+     * @return
+     */
     public Timestamp subtract(Timestamp ts) {
         PrecisionMultiplier modifier = TimestampUtils.getMultiplier(precision,ts.getPrecision());
         long v = ts.convertToPrecision(precision).getTimestamp();

@@ -1,16 +1,19 @@
 package com.oaktree.core.file;
 
-import com.oaktree.core.file.TimestampedFile;
+import com.oaktree.core.time.*;
+import com.oaktree.core.utils.Text;
 import org.junit.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by ij on 06/08/15.
@@ -35,7 +38,7 @@ public class TestTimestampedFile {
             }
             bw.flush();
             bw.close();
-            file = new TimestampedFile(filename,"HH:MM:SS.III");
+            file = new TimestampedFile(filename,"hh:mm:ss.iii");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -64,6 +67,51 @@ public class TestTimestampedFile {
             e.printStackTrace();
         }
     }
+
+    private void setupLongFile(long base) {
+        try {
+            tearDown();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(filename, true));
+            for (int i = 0; i < 10000; i++) {
+                //stick extra timestamps in for a more advanced second...
+                String string = (base+i) + " LINE" + (i) + "\n";
+                bw.write(string);
+            }
+
+            bw.flush();
+            bw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setupDatedFile() {
+        try {
+            tearDown();
+            String date = "12-AUG-2015 ";
+            BufferedWriter bw = new BufferedWriter(new FileWriter(filename, true));
+            for (int i = 0; i < lines; i++) {
+                //stick extra timestamps in for a more advanced second...
+                String string = date+timestampBase + i + " LINE" + (i) + "\n";
+                bw.write(string);
+            }
+            for (int i = 0; i < lines; i++) {
+                //stick extra timestamps in for a more advanced second...
+                String string = date+timestampBaseMore + i + " LINE" + (lines + i) + "\n";
+                bw.write(string);
+            }
+            for (int i = 0; i < lines; i++) {
+                //stick extra timestamps in for a more advanced second...
+                String string = date+ timestampBaseExtra + i + " LINE" + ((2 * lines) + i) + "\n";
+                bw.write(string);
+            }
+            bw.flush();
+            bw.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @After
     public void tearDown() {
         try {
@@ -76,6 +124,7 @@ public class TestTimestampedFile {
             e.printStackTrace();
         }
     }
+
 
 
     @Test
@@ -122,16 +171,6 @@ public class TestTimestampedFile {
             e.printStackTrace();
         }
     }
-
-//    @Test
-//    public void testGetSeekPositionForStartTimestamp() {
-//        try {
-//            long pos = TextFileUtils.getSeekPositionForStartTimestamp(file,timestampBase+"2");
-//            System.out.println("Pos for line3= "+pos);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     @Test
     public void testGetLinesWithinAllLines() {
@@ -185,4 +224,72 @@ public class TestTimestampedFile {
             System.out.println("Bravo...");
 
     }
+
+
+    @Test
+    public void testDatedTimestamps() {
+        setupDatedFile();
+        file = new TimestampedFile(filename,"DD-MMM-YYYY hh:mm:ss.iii");
+        //get 13:10:08 ->13:10:08 i.e the last minute
+        String min = (timestampBaseExtra + "0").substring(0,8);
+        Collection<String> lines = file.getAllLinesWithin(min, min);
+        Assert.assertEquals(lines.size(), this.lines, EPSILON);
+        for (String line : lines) {
+            Assert.assertEquals(min,line.substring(12,20));
+            System.out.println(line);
+        }
+        System.out.println("Bravo...");
+
+    }
+
+    @Test
+    public void testFilter() {
+        final List<String> bits = new ArrayList<String>();
+        setupExtendedFile();
+        file.setLineFilter(new ITimestampLineFilter() {
+            @Override
+            public boolean filter(Timestamp timestamp, String line) {
+                System.out.println("Timestamp: " + timestamp + ". Line: " + line);
+                bits.add(line);
+                return true;
+            }
+        });
+        //get 13:10:08 ->13:10:08 i.e the last minute
+        String min = (timestampBaseExtra + "0").substring(0,8);
+        Collection<String> lines = file.getAllLinesWithin(min, min);
+        Assert.assertEquals(lines.size(), this.lines, EPSILON);
+        for (String line : lines) {
+            Assert.assertEquals(min,line.substring(0,8));
+            System.out.println(line);
+        }
+        Assert.assertEquals(lines.size(),bits.size(),0);
+        System.out.println("Bravo...");
+    }
+//
+//    @Test
+//    public void testLongTimestamps() {
+//        long ms = System.currentTimeMillis();
+//        TimeOfDay tod = TimestampUtils.timeOfDayFromTimestamp(new Timestamp(ms*1000*1000,Precision.Nanos));
+////        ts.
+////        String min = ;
+//        //String min=Text.twoDigits(tod.getHour())+":" + Text.twoDigits(tod.getMinute());
+//        setupLongFile(ms);
+//        String fmt = "iiiiiiiiiiiii";
+//        file = new TimestampedFile(filename,fmt);
+//        //get 13:10:08 ->13:10:08 i.e the last minute
+//        Calendar cal = Calendar.getInstance();
+//        cal.set(cal.get(Calendar.YEAR),cal.get(Calendar.MONTH),cal.get(Calendar.DATE),(int)tod.getHour(),(int)tod.getMinute(),0);
+//        String min = ""+cal.getTime().getTime();
+//        Collection<String> lines = file.getAllLinesWithin(min, min);
+//        Assert.assertEquals(lines.size(), 10000, EPSILON);
+//        long idx = 0;
+//        for (String line : lines) {
+//            Assert.assertEquals(""+(ms+idx),line.substring(file.getTimestampFormat().getTimeStart(),file.getTimestampFormat().getTimeEnd()+1));
+//            System.out.println(line);
+//            idx++;
+//        }
+//        System.out.println("Bravo...");
+//
+//    }
+
 }
